@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+			<block class="Magento\Checkout\Block\Onepage\Success" template="Tz_TazaPay::success.phtml" name="sucsess-checkout" after="-"/>
+			<container name="tazapay.onepage.sucseess" htmlTag="div" htmlClass="row">			
+				<container name="payment.tazapay" htmlTag="div" htmlClass="sucsess-payment left col-md-6"/>
+				<container name="sucsess.content" htmlTag="div" htmlClass="sucsess-payment right col-md-6"/>	
+			</container>
+        </referenceContainer> 
+		 <move element="tazapay.info" destination="payment.tazapay" before="-"/>
+		 <move element="checkout.success" destination="sucsess.content" before="-"/>
+  		 <move element="checkout.registration" destination="sucsess.content" before="checkout.success"/>      
+    </body>    
+</page>

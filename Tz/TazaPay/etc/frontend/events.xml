@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Send mail on order success -->
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="checkout_onepage_controller_success_action_sendmail" instance="Tz\TazaPay\Observer\SendMailOnOrderSuccess" />
+    </event>
+</config>

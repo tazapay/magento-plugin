@@ -1,0 +1,63 @@
+<div class="fieldset-wrapper-title">
+    <span class="title"><?= /* @noEscape */ __('Tazapay Account Information')?></span>
+</div>
+
+<?php
+    $customerId = $block->getCustomerId();
+    $customer = $block->getCustomerById($customerId);
+    $customerEmail = $customer->getEmail();
+    $tazaPayUser = $block->getTazaPayUser($customerEmail);
+?>
+<table class="admin__table-secondary">
+    <tbody>
+        <?php
+        if (!empty($tazaPayUser) && is_array($tazaPayUser) && $tazaPayUser['status']== 'success') { ?>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Tazapay Account UUID')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['id'];?></td>
+            </tr>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Entity Type')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['ind_bus_type'];?></td>
+            </tr>
+            <?php if ($tazaPayUser['data']['ind_bus_type'] == "Individual") { ?>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('First Name')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['first_name'];?></td>
+            </tr>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Last Name')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['last_name'];?></td>
+            </tr>
+            <?php } else {?>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Business Name')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['company_name'];?></td>
+            </tr>
+            <?php } ?>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Email')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['email'];?></td>
+            </tr>
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Contact Code')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['contact_code'];?></td>
+            </tr>
+            <?php if ($tazaPayUser['data']['contact_number']) {?>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Contact Number')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['contact_number'];?></td>
+                </tr>
+            <?php }?>
+
+            <tr>
+                <th><strong><?= /* @noEscape */ __('Country')?>:<strong></th>
+                <td><?= /* @noEscape */ $tazaPayUser['data']['country'];?></td>
+            </tr>
+        <?php } else {?>
+            <tr>
+                <td> Customer does not have tazapay account.</td>
+            </tr>
+        <?php }?>
+    </tbody>
+</table>

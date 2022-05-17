@@ -1,0 +1,16 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="vendorpanel" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+	<body>
+	<referenceBlock name="csmarketplace_vendor_navigation">
+		<block class="Ced\CsMarketplace\Block\Link\Current" name="tazapay">
+			<arguments>
+				<argument name="name" xsi:type="string">cedvendor_tazapayaccountinfo</argument>
+				<argument name="label" xsi:type="string" translate="true">Tazapay Information</argument>
+				
+				<argument name="path" xsi:type="string">tazapay/cedvendor/tazapayaccountinfo/</argument>
+				<argument name="font_awesome" xsi:type="string">fa fa-user-circle-o</argument>
+				<argument name="sort_order" xsi:type="string">220</argument>
+			</arguments>
+		</block>
+	</referenceBlock>
+	</body>
+</page>

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <tazapay>
+                <active>0</active> 
+                <tazapay_payment_methods_buttons></tazapay_payment_methods_buttons>
+                <title>Pay Now, Release Later</title>
+                <environment>production</environment>
+                <tazapay_sandbox_api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></tazapay_sandbox_api_key>
+                <tazapay_sandbox_api_secret_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></tazapay_sandbox_api_secret_key>
+                <tazapay_production_api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></tazapay_production_api_key>
+                <tazapay_production_api_secret_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></tazapay_production_api_secret_key>
+                <tazapay_seller_name>seller name</tazapay_seller_name>
+                <tazapay_seller_email>seller@email.com</tazapay_seller_email>
+                <seller_tazapay_account_uuid></seller_tazapay_account_uuid>
+                <tazapay_seller_country>US</tazapay_seller_country>
+                <tazapay_seller_ind_bus_type>Individual</tazapay_seller_ind_bus_type>
+                <escrow_txn_type>service</escrow_txn_type>
+                <release_mechanism>tazapay</release_mechanism>
+                <fee_paid_by>seller</fee_paid_by>
+                <fee_percentage>0</fee_percentage>
+                <cgi_url_sandbox>https://api-sandbox.tazapay.com</cgi_url_sandbox>
+                <cgi_url_production>https://api.tazapay.com</cgi_url_production>
+                <tazapay_txn_description_for_escrow>Pay securely with buyer protection</tazapay_txn_description_for_escrow>
+                <tazapay_create_user_endpoint>/v1/user</tazapay_create_user_endpoint>
+                <tazapay_create_escrow_endpoint>/v1/escrow</tazapay_create_escrow_endpoint>
+                <tazapay_create_payment_endpoint>/v1/session/payment</tazapay_create_payment_endpoint>
+                <seller_type></seller_type>
+                <multi_seller_marketplace_extension></multi_seller_marketplace_extension>
+                <order_status>pending_payment</order_status>
+                <model>Tz\TazaPay\Model\PaymentMethod</model>
+                <!-- <group>offline</group> -->
+            </tazapay>
+        </payment>
+    </default>
+</config>

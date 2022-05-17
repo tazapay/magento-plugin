@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+	<menu>
+		<add id="Tz::top_level" title="TazaPay" module="Tz_TazaPay" sortOrder="50" resource="Magento_Backend::content"/>
+		<add id="Tz_TazaPay::tazapay_configuration" 
+			title="Tazapay Configurations" 
+			module="Tz_TazaPay" 
+			sortOrder="10" 
+			resource="Magento_Backend::content" 
+			parent="Tz::top_level"
+			action="adminhtml/system_config/edit/section/payment/"/>
+	</menu>
+</config>

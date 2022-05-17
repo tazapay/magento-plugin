@@ -1,0 +1,212 @@
+<?php
+
+$vendorId = $block->getVendorId();
+if ($vendorId) {
+    $vendor = $block->getVendor();
+    $email = $vendor->getData('email');
+    $tazaPayUser = $block->getTazaPayUser($email);
+    
+    $countryList = $block->getCountries();
+    if (!empty($tazaPayUser) && is_array($tazaPayUser) && $tazaPayUser['status'] == 'success') { ?>
+        <table class="admin__table-secondary">
+            <tbody>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Tazapay Account UUID')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['id'];?></td>
+                </tr>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Entity Type')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['ind_bus_type'];?></td>
+                </tr>
+                <?php if ($tazaPayUser['data']['ind_bus_type'] == "Individual") { ?>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('First Name')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['first_name'];?></td>
+                </tr>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Last Name')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['last_name'];?></td>
+                </tr>
+                <?php } else {?>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Business Name')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['company_name'];?></td>
+                </tr>
+                <?php } ?>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Email')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['email'];?></td>
+                </tr>
+
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Contact Code')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['contact_code'];?></td>
+                </tr>
+                <?php if ($tazaPayUser['data']['contact_number']){?>
+                    <tr>
+                        <th><strong><?= /* @noEscape */ __('Contact Number')?>:<strong></th>
+                        <td><?= /* @noEscape */ $tazaPayUser['data']['contact_number'];?></td>
+                    </tr>
+                <?php } ?>
+                <tr>
+                    <th><strong><?= /* @noEscape */ __('Country')?>:<strong></th>
+                    <td><?= /* @noEscape */ $tazaPayUser['data']['country'];?></td>
+                </tr>
+            </tbody>
+        </table>
+    <?php } else {?>
+
+        <form class="form tazapay-account-form form-horizontal"
+            action="<?= $block->escapeUrl($block->getCreateTazaPayUserFormAction());?>"
+            id="create-tazapay-account-form"
+            method="post"
+            data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>"
+            data-mage-init='{"validation":{}}'>
+            <input name="form_key" type="hidden" value="<?php echo $block->getFormKey();?>">
+            <fieldset class="fieldset">
+                <legend class="legend">
+                    <span><?= $block->escapeHtml(__('Create Tazapay Account')) ?></span>
+                </legend><br />
+                <div class="field form-group ind_bus_type required">
+                    <label class="col-sm-2 control-label" for="ind_bus_type">
+                        <span><?= $block->escapeHtml(__('Entity Type')) ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+
+                        <select name="ind_bus_type" id="ind_bus_type" class="input-text form-control" type="text"
+                            data-validate="{required:true}">
+                            <option value="Individual"><?= /* @noEscape */ __('Individual')?></option>
+                            <option value="Business"><?= /* @noEscape */ __('Business')?></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field form-group firstname required">
+                    <label class="col-sm-2 control-label" for="firstname">
+                        <span><?= $block->escapeHtml(__('First Name')) ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <input name="firstname" 
+                            id="firstname" 
+                            title="<?= $block->escapeHtmlAttr(__('First Name')) ?>" 
+                            class="input-text form-control" 
+                            type="text" 
+                            data-validate="{required:true}"/>
+                    </div>
+                </div>
+                <div class="field form-group lastname required">
+                    <label class="col-sm-2 control-label" for="lastname">
+                        <span><?= $block->escapeHtml(__('Last Name')) ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <input name="lastname" id="lastname" 
+                            title="<?= $block->escapeHtmlAttr(__('Last Name')) ?>" 
+                            class="input-text form-control" 
+                            type="text" 
+                            data-validate="{required:true}"/>
+                    </div>
+                </div>
+                <div class="field form-group businessname required">
+                    <label class="col-sm-2 control-label" for="businessname">
+                        <span><?= $block->escapeHtml(__('Business Name')) ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <input name="businessname" id="businessname" title="<?= $block->escapeHtmlAttr(__('Business Name')) ?>"
+                            class="input-text form-control" type="text" data-validate="{required:true}" />
+                    </div>
+                </div>
+                <div class="field form-group email required">
+                    <label class="col-sm-2 control-label" for="email">
+                        <span><?= $block->escapeHtml(__('E-Mail')) ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <input name="email" 
+                            id="email" 
+                            title="<?= $block->escapeHtmlAttr(__('E-Mail')) ?>" 
+                            value="<?= /* @noEscape */ $email;?>" class="input-text form-control" 
+                            type="email" data-validate="{required:true, 'validate-email':true}" 
+                            />
+                    </div>
+                </div>
+                <div class="field form-group telephone">
+                    <label class="col-sm-2 control-label" for="telephone">
+                        <span><?= $block->escapeHtml(__('Phone Number'))?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <input name="telephone" 
+                            id="telephone" 
+                            title="<?= $block->escapeHtmlAttr(__('Phone Number'))?>" 
+                            class="input-text form-control"
+                            type="text" 
+                            data-validate="{required:true,'validate-number':true}"/>
+                    </div>
+                </div>
+                <div class="field form-group country required">
+                    <label class="col-sm-2 control-label" for="country">
+                        <span><?= /* @noEscape */  __('Country') ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <?=/* @noEscape */ $countryList;?>
+                    </div>
+               </div>
+               <?php /*
+               <div class="field form-group partners_customer_id">
+                    <label class="col-sm-2 control-label" for="partners_customer_id">
+                        <span><?= $block->escapeHtml(__('Partner Customer ID')) ?></span>
+                    </label>
+                    <div class="control col-sm-6">
+                        <input name="partners_customer_id" id="partners_customer_id"
+                            title="<?= $block->escapeHtmlAttr(__('Partner Customer ID')) ?>" class="input-text form-control"
+                            type="text" />
+                    </div>
+                </div>
+                */?>
+               <div class="actions-toolbar form-group">
+                    <div class="col-sm-2"></div>
+                    <div class="primary control col-sm-6">
+                        <input type="hidden" 
+                            name="country_code" 
+                            id="country_code" 
+                            value="<?= /* @noEscape */ $vendor->getData('country_id');?>" />
+                        
+                        <button type="submit" 
+                            title="<?= $block->escapeHtmlAttr(__('Submit')) ?>" 
+                            class="action submit primary">
+                            <span><?= $block->escapeHtml(__('Submit')) ?></span>
+                        </button>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+        
+        <script type="text/javascript">
+            require(['jquery', 'jquery/ui'], function($) {
+                jQuery(document).ready( function() {
+
+                    var ind_bus_type = jQuery('#ind_bus_type').val();
+                    if (ind_bus_type == "Individual") {
+                        $(".businessname").hide();
+                    }
+                    $('#ind_bus_type').on('change', function() {
+                        var ind_bus_type = jQuery(this).val();
+                        if (ind_bus_type == "Individual") {
+                            $(".businessname").hide();
+                            $(".firstname").show();
+                            $(".lastname").show();
+                            $("#businessname").val("");
+                        } else if (ind_bus_type == "Business") {
+                            $(".businessname").show();
+                            $(".firstname").hide();
+                            $(".lastname").hide();
+                            $("#firstname").val("");
+                            $("#lastname").val("");
+                        }
+                    });
+
+                    var selectedCountry = jQuery('#country_code').val();
+                    $("#country").addClass('form-control');
+                    $("#country").val(selectedCountry);
+                });
+            });
+        </script>  
+    <?php } ?>
+<?php } ?>

@@ -1,0 +1,26 @@
+{
+    "name": "tz/tazapay",
+    "description": "Tazapay integration for Magento 2",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": [
+        "GPL-3.0"
+    ],
+    "require": {
+        "php": "~7.1.3||~7.2.0||~7.3.0||~7.4.0"
+    },
+    "keywords": [
+        "TazaPay",
+        "payment",
+        "php",
+        "magento2"
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Tz\\TazaPay\\": ""
+        }
+    }
+}

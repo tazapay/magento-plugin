@@ -1,0 +1,69 @@
+<?php
+$orderId = $this->getRequest()->getParam('order_id');
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$controllerName = $this->getRequest()->getControllerName();
+$actionName = $this->getRequest()->getActionName();
+$routeName = $this->getRequest()->getRouteName();
+$moduleName = $this->getRequest()->getModuleName();
+$order = $objectManager->create('Magento\Sales\Api\Data\OrderInterface')->load($orderId);
+$state = $order->getState();
+$status = $order->getStatus();
+
+if (($controllerName == "vorders")
+    && ($routeName == "csmarketplace")
+    && ($moduleName == "csmarketplace")
+) {
+    $vOrderId = $this->getRequest()->getParam('order_id');
+    $vOrder = $objectManager->get('\Ced\CsMarketplace\Model\VordersFactory')->create()->load($vOrderId);
+    $orderId = $vOrder->getData("real_order_id");
+    $refreshEscrowStatusUrl = $block->getRefreshEscrowStatusUrl()."order_id/".$orderId;
+} else {
+    $refreshEscrowStatusUrl = $block->getRefreshEscrowStatusUrl()."order_id/".$orderId;
+}?>
+<dl class="payment-method purchase order">
+    <dt class="title"><?= $block->escapeHtml($block->getMethod()->getTitle()) ?></dt>
+    <dd class="content">
+        <?php if (!empty($block->getInfo()->getBuyerTazapayAccountUuid())) { ?>
+            <b><?= $block->escapeHtml(__('Tazapay Account UUID'));?>:</b><br>
+            <span class="number"><?= $block->escapeHtml($block->getInfo()->getBuyerTazapayAccountUuid()) ?></span>
+            <br>
+        <?php } ?>
+        <?php if (!empty($block->getInfo()->getTazapayPayerEmail())) { ?>
+            <b><?= $block->escapeHtml(__('Tazapay Payer Email'));?>:</b>
+            <span class="number"><?= $block->escapeHtml($block->getInfo()->getTazapayPayerEmail()) ?></span>
+            <br>
+        <?php } ?>
+        <?php if (!empty($block->getInfo()->getEscrowTxnNo())) { ?>
+            <b><?= $block->escapeHtml(__('Escrow txn_no'));?>:</b>
+            <span class="number"><?= $block->escapeHtml($block->getInfo()->getEscrowTxnNo()) ?></span>
+            <?php if (($controllerName == "order")
+                    && ($actionName == "view")
+                    && ($routeName == "sales")
+                    && ($moduleName == "sales")
+                ) { ?> 
+                    <br>        
+                    <span class="number">
+                        <a class="action primary continue refresh-status"
+                            href="<?= $block->escapeHtml($refreshEscrowStatusUrl);?>">
+                            <?= /* @noEscape */ __('Refresh Escrow Status');?>
+                        </a>
+                    </span>
+                    <br>
+            <?php } ?>
+        <?php } ?>
+        <?php if ((!empty($block->getInfo()->getTazapayCreatePaymentRedirectUrl()))
+            && ($state == "new")
+            && ($status == "pending")
+            && ($controllerName == "order")
+            && ($routeName == "sales")
+            && ($moduleName == "sales")
+            ) { ?>
+            <span class="number">
+                <a class="action primary continue click-pay" target="_blank"
+                    href="<?= $block->escapeHtml($block->getInfo()->getTazapayCreatePaymentRedirectUrl()) ?>">
+                    <?= /* @noEscape */ __('Pay With Escrow');?>
+                </a>
+            </span>
+        <?php } ?>
+    </dd>
+</dl>
