@@ -1,0 +1,65 @@
+<?php 
+ 
+$orderId = $this->getRequest()->getParam('order_id');
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$order = $objectManager->create('Magento\Sales\Api\Data\OrderInterface')->load($orderId);
+$state = $order->getState();
+$status = $order->getStatus();
+
+$controllerName = $this->getRequest()->getControllerName();
+$actionName = $this->getRequest()->getActionName();
+$routeName = $this->getRequest()->getRouteName();
+$moduleName = $this->getRequest()->getModuleName();
+
+$refreshEscrowStatusUrl = $block->getRefreshEscrowStatusAdminUrl();
+
+?>
+
+<dl class="payment-method purchase order">
+    <dt class="title"><?= $block->escapeHtml($block->getMethod()->getTitle()) ?></dt>
+    
+    <dd class="content" style="margin-left: 0;margin-top: 10px;">
+        <?php if (!empty($block->getInfo()->getBuyerTazapayAccountUuid())) { ?>  
+            <b><?= $block->escapeHtml(__('Tazapay Account UUID'));?>:</b><br>
+            <span class="number"><?= $block->escapeHtml($block->getInfo()->getBuyerTazapayAccountUuid()) ?></span>
+            <br> <br>
+        <?php } ?>
+        <?php if (!empty($block->getInfo()->getTazapayPayerEmail())) { ?>     
+            <b><?= $block->escapeHtml(__('Tazapay Payer E-Mail'));?>:</b>
+            <span class="number"><?= $block->escapeHtml($block->getInfo()->getTazapayPayerEmail()) ?></span>
+            <br> <br>
+        <?php } ?>
+        <?php if (!empty($block->getInfo()->getEscrowTxnNo())) { ?>     
+            <b><?= $block->escapeHtml(__('Escrow txn_no'));?>:</b>
+            <span class="number"><?= $block->escapeHtml($block->getInfo()->getEscrowTxnNo()) ?></span>
+                <?php if (($controllerName == "order")
+                    && ($actionName == "view")
+                    && ($routeName == "sales")
+                    && ($moduleName == "sales")
+                ) { ?>  
+                    <br> <br>
+                    <span class="number">
+                        <a class="action primary continue refresh-status action-default scalable action-save action-secondary"
+                            href="<?= $block->escapeHtml($refreshEscrowStatusUrl);?>">
+                            <?= /* @noEscape */ __('Refresh Escrow Status');?>
+                        </a>
+                    </span>
+                    <br>
+                <?php } ?>
+        <?php } ?>
+        <?php /*?>
+        <?php if (!empty($block->getInfo()->getTazapayCreatePaymentRedirectUrl())) { ?>
+            <p style="color:red;">
+                <?= __('You place order but not complete payment please pay otherwise your order will cancel automatically.');
+                ?>
+            </p>
+            <span class="number">
+                <a class="action primary continue click-pay"
+                    onClick='window.open("<?= $block->escapeHtml($block->getInfo()->getTazapayCreatePaymentRedirectUrl()) ?>","Ratting","width=800,height=900,");' href="javascript:void(0);">
+                    <?= __('Pay By TazaPay');?>
+                </a>
+            </span>
+        <?php } ?>
+    </dd>
+    <?php */?>
+</dl>

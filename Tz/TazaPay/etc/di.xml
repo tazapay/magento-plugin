@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Configuration reader -->
+    <type name="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Tz\TazaPay\Model\Ui\ConfigProvider::CODE</argument>
+        </arguments>
+    </type>
+    <!-- Custom logger -->
+    <type name="Tz\TazaPay\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="Tz\TazaPay\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">Payment</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">Tz\TazaPay\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+    <!-- To avoid order duplication Email -->
+    <type name="Magento\Sales\Model\Order\Email\Container\OrderIdentity">
+        <plugin name="change_is_enable_method" type="\Tz\TazaPay\Plugin\Sales\Order\Email\Container\OrderIdentityPlugin"/>
+    </type>
+</config>

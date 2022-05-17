@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!--add custom block below payment information section-->
+        <!-- <referenceBlock name="order_additional_info">
+            <block class="Tz\TazaPay\Block\Adminhtml\Order\View\PaymentAdditionalInfo" name="tz_tazapay_additional_info" template="order/view/paymentAdditionalInfo.phtml"/>
+        </referenceBlock> -->
+    </body>
+</page>

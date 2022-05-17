@@ -1,0 +1,47 @@
+<?php
+$orderId = $this->getOrderId();
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$order = $objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($orderId);
+$payment = $order->getPayment();
+$payNow =  $order->getPayment()->getTazapayCreatePaymentRedirectUrl();
+$method = $payment->getMethodInstance();
+$state = $order->getState();
+$status = $order->getStatus();
+?>
+
+<h3 class="subtitle"><?= $block->escapeHtml(__('Tazapay Information')) ?></h3>
+<dl class="payment-method purchase order">
+    <br>
+    <dt class="title"><?= $block->escapeHtml($method->getTitle()) ?></dt>
+</dl>
+<?php if (($method->getCode() == 'tazapay' )):?>
+    <div class="order additional details comments">
+
+        <dl class="order comments">
+            <?php foreach ($order->getStatusHistoryCollection() as $_commentItem): ?>
+            <?php if ($_commentItem->getComment()):?>
+            <dt class="comment date" style="float:left;margin-right:20px;">
+                <?= /* @noEscape */
+                                $block->formatDate($_commentItem->getCreatedAt(), \IntlDateFormatter::MEDIUM, true) ?>
+            </dt>
+            <dd class="comment text"><?= $block->escapeHtml($_commentItem->getComment()) ?></dd>
+            <?php endif;?>
+            <?php endforeach; ?>
+        </dl>
+        <?php if (
+            (!empty($payNow))
+            && ($state == "new")
+            && ($status == "pending")
+            ) { ?>
+
+            <div class="actions-toolbar">
+                <div class="primary">
+                    <a class="action primary continue"
+                        href="<?= /* @noEscape */ $block->escapeHtml($payNow);?>">
+                        <span><?= /* @noEscape */ $block->escapeHtml($method->getTitle());?></span>
+                    </a>
+                </div>
+            </div>
+        <?php } ?>
+    </div>
+<?php endif;?>

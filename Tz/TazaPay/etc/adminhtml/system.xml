@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <resource>Tz_TazaPay::tazapay_configuration</resource>
+            <group id="tazapay" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <comment><![CDATA[<div class="tazapay-payment-logo"></div><div class="tazapay-payment-text"><strong>Tazapay Payment</strong> <span class="heading-intro">The Tazapay escrow API allows you as a marketplace partner to create accounts,share information about an underlying contact between two parties and to collect,hold and receive payments between multiple parties.</span><div class="tazapay-payment-methods-logo"></div></div>]]></comment>
+                <fieldset_css>complex tazapay</fieldset_css>
+                <frontend_model>Tz\TazaPay\Block\Adminhtml\System\Config\Fieldset\Payment</frontend_model>
+                <!-- <label>Tazapay</label> -->
+                <group id="tazapay_basic" translate="label" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="1">
+                    <label>General Configuration </label>
+                    <attribute type="expanded">1</attribute>
+                    
+                    <!-- Enable or disable payment method -->
+                    <field id="active" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Enable Tazapay Payments Plugin</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment><![CDATA[Please select the Yes option for enable to tazapay payment method]]></comment>
+                        <config_path>payment/tazapay/active</config_path>
+                    </field>
+
+                    <!-- Title -->
+                    <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Title</label>
+                        <config_path>payment/tazapay/title</config_path>
+                        <comment><![CDATA[Payment method title]]></comment>
+                    </field>
+
+                    <!-- Environment Sandbox/Production (live) -->
+                    <field id="environment" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Select Mode</label>
+                        <source_model>Tz\TazaPay\Model\Config\Source\Environment</source_model>
+                        <config_path>payment/tazapay/environment</config_path>
+                        <comment><![CDATA['Production' mode is used for LIVE transactions, 'Sandbox' mode can be used for testing]]></comment>
+                    </field>
+
+                    <!-- Request Credintial for sandbox -->
+                    <field id="request_credintial" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label></label>
+                        <frontend_model>Tz\TazaPay\Block\Adminhtml\Form\Field\RequestCredintial</frontend_model>
+                        <comment><![CDATA[Request Sandbox credentials for accepting payments via Tazapay. Signup now and go to 'Request API Key'.]]></comment>
+                        <depends>
+                            <field id="environment">sandbox</field>
+                        </depends>
+                    </field>
+
+                    <!-- Request Credintial for production -->
+                    <field id="request_credintial_for_production" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label></label>
+                        <frontend_model>Tz\TazaPay\Block\Adminhtml\Form\Field\RequestCredintialForProduction</frontend_model>
+                        <comment><![CDATA[Request Production credentials for accepting payments via Tazapay. Signup now and go to 'Request API Key'.]]></comment>
+                        <depends>
+                            <field id="environment">production</field>
+                        </depends>
+                    </field>
+
+                    <!-- Api key for Sandbox-->
+                    <field id="tazapay_sandbox_api_key" translate="label" sortOrder="40" type="obscure" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Sandbox API Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <comment><![CDATA[Please input the Sandbox API Key received from Tazapay]]></comment>
+                        <config_path>payment/tazapay/tazapay_sandbox_api_key</config_path>
+                        <validate>required-entry</validate>
+                        <depends>
+                            <field id="environment">sandbox</field>
+                        </depends>
+                    </field>
+
+                    <!-- Api secret key for Sandbox -->
+                    <field id="tazapay_sandbox_api_secret_key" translate="label" sortOrder="50" type="obscure" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Sandbox API Secret Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <config_path>payment/tazapay/tazapay_sandbox_api_secret_key</config_path>
+                        <comment><![CDATA[Please input the Sandbox API Secret Key received from Tazapay]]></comment>
+                        <validate>required-entry</validate>
+                        <depends>
+                            <field id="environment">sandbox</field>
+                        </depends>
+                    </field>
+
+                    <!-- Api key for Production -->
+                    <field id="tazapay_production_api_key" translate="label" sortOrder="60" type="obscure" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Production API Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <comment><![CDATA[Please input the Production API Key received from Tazapay]]></comment>
+                        <config_path>payment/tazapay/tazapay_production_api_key</config_path>
+                        <validate>required-entry</validate>
+                        <depends>
+                            <field id="environment">production</field>
+                        </depends>
+                    </field>
+
+                    <!-- Api secret key for Production -->
+                    <field id="tazapay_production_api_secret_key" translate="label" sortOrder="70" type="obscure" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Production API Secret Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <comment><![CDATA[Please input the Production API Secret Key received from Tazapay]]></comment>
+                        <config_path>payment/tazapay/tazapay_production_api_secret_key</config_path>
+                        <validate>required-entry</validate>
+                        <depends>
+                            <field id="environment">production</field>
+                        </depends>
+                    </field>
+
+                    <!-- Tazapay Seller E-Mail -->
+                    <field id="tazapay_seller_email" translate="label" sortOrder="80" type="text" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Email</label>
+                        <validate>required-entry validate-email</validate>
+                        <comment><![CDATA[Please input the email ID which you used to signup with Tazapay]]></comment>
+                        <config_path>payment/tazapay/tazapay_seller_email</config_path>
+                    </field>
+
+                    <!-- Seller Types single seller/multiseller -->
+                    <field id="seller_type" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Platform Type</label>
+                        <source_model>Tz\TazaPay\Model\Config\Source\SellerType</source_model>
+                        <config_path>payment/tazapay/seller_type</config_path>
+                        <comment><![CDATA[Select 'Multi Seller' if you have other sellers on your platform, keep 'Single Seller' if you are the only seller on the platform]]></comment>
+                    </field>
+
+                    <!-- Seller Types single seller/multiseller -->
+                    <field id="multi_seller_marketplace_extension" translate="label" type="select" sortOrder="120" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Vendor Plugin Name</label>
+                        <source_model>Tz\TazaPay\Model\Config\Source\MultiSellerMarketPlaceExtensions</source_model>
+                        <config_path>payment/tazapay/multi_seller_marketplace_extension</config_path>
+                        <comment><![CDATA[Please select the plugin you use to manage vendors (sellers) on your platform]]></comment>
+                        <depends>
+                            <field id="seller_type">multi_seller</field>
+                        </depends>
+                    </field>
+
+                    <!-- txn_type goods/service -->
+                    <field id="escrow_txn_type" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Transaction Type</label>
+                        <source_model>Tz\TazaPay\Model\Config\Source\EscrowTxnType</source_model>
+                        <config_path>payment/tazapay/escrow_txn_type</config_path>
+                        <comment><![CDATA[Type of underlying trade]]></comment>
+                    </field>
+
+                    <!-- release_mechanism marketplace/tazapay -->
+                    <field id="release_mechanism" translate="label" type="select" sortOrder="230" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Release Mechanism</label>
+                        <source_model>Tz\TazaPay\Model\Config\Source\ReleaseMechanism</source_model>
+                        <config_path>payment/tazapay/release_mechanism</config_path>
+                        <comment><![CDATA[Specify who control release verification]]></comment>
+                    </field>
+
+                    <!-- fee_paid_by seller/buyer -->
+                    <field id="fee_paid_by" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Fee Paid By</label>
+                        <source_model>Tz\TazaPay\Model\Config\Source\FeePaidBy</source_model>
+                        <config_path>payment/tazapay/fee_paid_by</config_path>
+                        <comment><![CDATA[Tazapay account uuid. If empty; contracted value will get applied]]></comment>
+                    </field>
+
+                    <!-- txn_description for Create Escrow -->
+                    <field id="tazapay_txn_description_for_escrow" translate="label" sortOrder="250" type="textarea" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Transaction Description</label>
+                        <validate>required-entry</validate>
+                        <comment><![CDATA[A short synopsis of the type of goods/service]]></comment>
+                        <config_path>payment/tazapay/tazapay_txn_description_for_escrow</config_path>
+                    </field>
+
+                    <!-- <field id="fee_percentage" translate="label comment" sortOrder="124" type="text" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Fee Percentage</label>
+                        <validate>required-entry validate-digits validate-not-negative-number validate-digits-range digits-range-0-100</validate>
+                        <comment><![CDATA[Fee percenatge between 0 to 100]]></comment>
+                    </field> -->
+
+                </group>
+                <!-- Api URL for Sandbox -->
+                <field id="cgi_url_sandbox" translate="label" sortOrder="140" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
+                    <label>Api URL (Sandbox)</label>
+                    <validate>required-entry</validate>
+                    <comment><![CDATA[Sandbox api url : https://api-sandbox.tazapay.com]]></comment>
+                    <config_path>payment/tazapay/cgi_url_sandbox</config_path>
+                    <depends>
+                        <field id="environment">sandbox</field>
+                    </depends>
+                </field>
+
+                <!-- Api URL for Production -->
+                <field id="cgi_url_production" translate="label" sortOrder="150" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
+                    <label>Api URL (Production)</label>
+                    <validate>required-entry</validate>
+                    <comment><![CDATA[Production api url : https://api.tazapay.com]]></comment>
+                    <config_path>payment/tazapay/cgi_url_production</config_path>
+                    <depends>
+                        <field id="environment">production</field>
+                    </depends>
+                </field>
+
+                <!-- Create user Endpoint -->
+                <field id="tazapay_create_user_endpoint" translate="label" sortOrder="160" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
+                    <label>Create user Endpoint</label>
+                    <validate>required-entry no-whitespace</validate>
+                    <comment><![CDATA[Create user Endpoint : /v1/user]]></comment>
+                    <config_path>payment/tazapay/tazapay_create_user_endpoint</config_path>
+                </field>
+                <!-- Create Escrow Endpoint -->
+                <field id="tazapay_create_escrow_endpoint" translate="label" sortOrder="170" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
+                    <label>Create Escrow Endpoint</label>
+                    <validate>required-entry no-whitespace</validate>
+                    <comment><![CDATA[Create Escrow Endpoint : /v1/escrow]]></comment>
+                    <config_path>payment/tazapay/tazapay_create_escrow_endpoint</config_path>
+                </field>
+
+                <!-- Create Payment Endpoint -->
+                <field id="tazapay_create_payment_endpoint" translate="label" sortOrder="180" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
+                    <label>Create Payment Endpoint</label>
+                    <validate>required-entry no-whitespace</validate>
+                    <comment><![CDATA[Create Payment Endpoint : /v1/session/payment]]></comment>
+                    <config_path>payment/tazapay/tazapay_create_payment_endpoint</config_path>
+                </field>
+                
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="190" showInDefault="1" showInWebsite="1" canRestore="1">
+                    <label>Payment from Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                    <comment><![CDATA[Allow all countries for store level]]></comment>
+                </field>
+
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="210" showInDefault="1" showInWebsite="1">
+                    <label>Payment from Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <comment><![CDATA[Allow specific countries for store level]]></comment>
+                </field>
+
+                <field id="sort_order" translate="label" type="text" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                    <comment><![CDATA[Tazapay payment method will show by given sort order]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

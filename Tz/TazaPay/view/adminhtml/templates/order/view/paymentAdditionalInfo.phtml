@@ -1,0 +1,36 @@
+<?php
+/**
+ * Copyright © 2021 Tz TazaPay Development Inc. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+    $custom_block = $block->getpaymentAdditionalInformation();
+    $order = $block->getOrder();
+    $orderIncrementId = $order->getIncrementId();
+    $payment = $order->getPayment();
+    $method = $payment->getMethodInstance();
+    $methodTitle = $method->getTitle();
+    $payment_method = $payment->getMethod();
+    $additionalInformation = $order->getPayment()->getAdditionalInformation();
+
+?>
+<?php if ($payment_method=="tazapay") { ?>
+    <table class="admin__table-secondary order-information-table" style="width: 50%;">
+        <tbody>
+            <tr>
+                <th> <?= /* @noEscape */__("Payment method title"); ?> </th>
+                <td> <?= /* @noEscape */$methodTitle; ?> </td>
+            </tr>
+            <tr>
+                <th> <?= /* @noEscape */__("Payment method code"); ?> </th>
+                <td> <?= /* @noEscape */ $payment_method; ?> </td>
+            </tr>
+            <?php if (isset($additionalInformation['transactionId'])) { ?>
+                <tr>
+                    <th> <?= /* @noEscape */__("Transaction ID"); ?> </th>
+                    <td> <?= /* @noEscape */$additionalInformation['transactionId']; ?> </td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+<?php } ?>

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="vendorpanel" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+	<update handle="csmarketplace_vendor"/>
+	<body>
+		<referenceBlock name="page.main.title">
+            <action method="setPageTitle">
+                <argument translate="true" name="title" xsi:type="string">Tazapay Account Information</argument>
+            </action>
+        </referenceBlock>
+		<referenceBlock name="vendor.dashboard.wrapper">
+			<block class="Tz\TazaPay\Block\CedVendor\TazaPayAccountInfo" cacheable="false" name="tazapay_cedvendor_tazapayaccountinfo" template="Tz_TazaPay::CedVendor/tazapayAccountInfo.phtml" />
+		</referenceBlock>
+	</body>
+</page>
+

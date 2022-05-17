@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Tazapay payment method restriction -->
+     <event name="payment_method_is_active">  
+        <observer name="restrict_payment_methods" instance="Tz\TazaPay\Observer\RestrictPaymentMethods" />  
+    </event> 
+</config>
