@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tz\TazaPay\Rewrite\Ced\CsMarketplace\Block\Adminhtml\Vendor\Entity\Edit;
 
-class Tabs extends \Ced\CsMarketplace\Block\Adminhtml\Vendor\Entity\Edit\Tabs
-{
+ class Tabs extends \Ced\CsMarketplace\Block\Adminhtml\Vendor\Entity\Edit\Tabs
+ {
     /**
      * Tazapay information tab
      */
