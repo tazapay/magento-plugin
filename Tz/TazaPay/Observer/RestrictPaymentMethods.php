@@ -112,9 +112,9 @@ class RestrictPaymentMethods implements ObserverInterface
                 $sellerEmail = $this->helper->getSellerEmail();
                 $sellerIndBusType = $this->helper->getSellerIndBusType();
                 $tazaPayUser = $this->helper->getTazaPayUserByEmail($sellerEmail);
-                if ($tazaPayUser['status'] == "success") {
+                if (@$tazaPayUser['status'] == "success") {
                     $sellerId = $tazaPayUser['data']['id'];
-                } elseif ($tazaPayUser['status'] == "error") {
+                } elseif (@$tazaPayUser['status'] == "error") {
                     $checkResult->setData('is_available', false);
                 }
                 // If sellerType is single seller and seller does not have tazapay account

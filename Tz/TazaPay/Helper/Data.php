@@ -673,7 +673,8 @@ class Data extends AbstractHelper
             'ZM'=>'260',
             'ZW'=>'263'
         ];
-        $phoneCode = $countryCodeArray[$countryCode];
+        
+        $phoneCode = @$countryCodeArray[$countryCode];
         return $phoneCode;
     }
 
@@ -899,7 +900,8 @@ class Data extends AbstractHelper
         $body = \Zend_Http_Response::extractBody($result);
         /* convert JSON to Array */
         $response = $this->jsonHelper->jsonDecode($body);
-        $status = $response['status'];
+       
+        $status = @$response['status'];
         $result = [];
         $error_message = null;
         if ($status == "error" && $status !="success") {
@@ -987,7 +989,7 @@ class Data extends AbstractHelper
         /* convert JSON to Array */
         $response = $this->jsonHelper->jsonDecode($body);
 
-        $status = $response['status'];
+        $status = @$response['status'];
         $result = [];
         $error_message = null;
         if ($status == "error" && $status !="success") {
