@@ -9,7 +9,8 @@ define(
         'Magento_Checkout/js/action/place-order',
         'Magento_Ui/js/model/messageList',
         'Magento_Checkout/js/model/quote',
-        'Magento_Customer/js/customer-data'
+        'Magento_Customer/js/customer-data',
+        'domReady!'
     ],
     function(
         Component, 
