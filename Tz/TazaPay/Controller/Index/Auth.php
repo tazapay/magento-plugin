@@ -736,6 +736,7 @@ class Auth extends \Magento\Framework\App\Action\Action
                             "seller_id" => $sellerId,
                             "txn_description" => $transactionDescription,
                             "invoice_currency" => $currency,
+                            "transaction_source" => 'magento',
                             "invoice_amount" => $grandTotal
                         ];
                         $this->_logger->info("escrowParams:- ".json_encode($escrowParams));
