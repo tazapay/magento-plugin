@@ -221,7 +221,7 @@ class Success extends \Magento\Framework\App\Action\Action
                     // Get escrow state and subState
                     foreach ($escrowStatus['data'] as $key => $value) {
                         if (!empty($value)) {
-                            $escrow_status_msg .= $key.": ".$value.". ";
+                            @$escrow_status_msg .= $key.": ".$value.". ";
                         }
                     }
                     /*

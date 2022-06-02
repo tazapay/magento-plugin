@@ -2,6 +2,7 @@
 
 This plugin enables your Magento powered platform to start accepting international payments via Tazapay's Escrow product.
 
+
 ### How do Tazapay's escrow payments work?
 1. The buyer can select the product or service and make a payment like any other online checkout option (available payment methods depend on the buyer's country and the amount of money to be transferred)
 2. Once the payment is complete, the funds are received and secured in a bank account under the jurisdiction of MAS (Monetary Authority of Singapore)
