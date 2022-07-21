@@ -48,4 +48,5 @@ Thumbs.db
 *.mov
 *.wmv
 
+# Ignore pipelines file when syncing to github.
 bitbucket-pipelines.yml
