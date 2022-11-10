@@ -416,22 +416,6 @@ class Data extends AbstractHelper
             $scope
         );
     }
-    
-    /**
-     * Generate salt
-     *
-     * @return string
-     */
-    public function generateSalt()
-    {
-        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-        $l = strlen($chars) - 1;
-        $salt = '';
-        for ($i = 0; $i < 8; ++$i) {
-            $salt .= $chars[rand(0, $l)];
-        }
-        return $salt;
-    }
 
     /**
      * Get phone code
@@ -691,19 +675,19 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Generate signature
-     * $hmacSHA256 is generate hmacSHA256
-     * $signature is convert hmacSHA256 into base64 encode
-     * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
+     * Generate basicAuth
+     * Encode the $basic_auth format into base64 encode
+     * in document: Authorization = "Basic " + base64_encode($basic_auth);
      *
-     * @param  mixed $to_sign
-     * @param  mixed $apiSecretKey
+     * @param mixed $apiKey
+     * @param mixed $apiSecretKey
      */
-    public function getSignature($to_sign, $apiSecretKey)
+
+    public function basicAuthorization($apiKey, $apiSecretKey)
     {
-        $hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecretKey);
-        $signature = base64_encode($hmacSHA256);
-        return $signature;
+        $basic_auth = $apiKey . ':' . $apiSecretKey;
+		$authorization = "Basic " . base64_encode($basic_auth);
+		return $authorization;
     }
 
     /**
@@ -868,20 +852,12 @@ class Data extends AbstractHelper
         */
         $method = "GET";
         $geUserEndpoint = $this->getCreateUserEndpoint()."/".$email;
-        $salt = $this->generateSalt();
-        $timestamp = time();
-        // Generate to_sign
-        $to_sign = $method.$geUserEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-        // Get signature
-        $signature = $this->getSignature($to_sign, $apiSecretKey);
         $getUserApiUrl = $apiUrl.$geUserEndpoint;
-        
+        // Get authorization
+        $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
         // Set header
         $setHeader = [
-            'accesskey: '.$apiKey,
-            'salt: '.$salt,
-            'signature: '.$signature,
-            'timestamp: '.$timestamp,
+            'Authorization: '.$authorization,
             'Content-Type: application/json'
         ];
         /* Create curl factory */
@@ -956,20 +932,12 @@ class Data extends AbstractHelper
         */
         $method = "GET";
         $countryConfigEndpoint = "/v1/metadata/countryconfig";
-        $salt = $this->generateSalt();
-        $timestamp = time();
-        // Generate to_sign
-        $to_sign = $method.$countryConfigEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-        // Get signature
-        $signature = $this->getSignature($to_sign, $apiSecretKey);
         $countryConfigApiUrl = $apiUrl.$countryConfigEndpoint."?country=".$sellerCountryCode;
-        
+        // Get authorization
+        $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
         // Set header
         $setHeader = [
-            'accesskey: '.$apiKey,
-            'salt: '.$salt,
-            'signature: '.$signature,
-            'timestamp: '.$timestamp,
+            'Authorization: '.$authorization,
             'Content-Type: application/json'
         ];
         /* Create curl factory */
@@ -1045,20 +1013,12 @@ class Data extends AbstractHelper
         */
         $method = "GET";
         $invoiceCurrencyEndpoint = "/v1/metadata/invoicecurrency";
-        $salt = $this->generateSalt();
-        $timestamp = time();
-        // Generate to_sign
-        $to_sign = $method.$invoiceCurrencyEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-        // Get signature
-        $signature = $this->getSignature($to_sign, $apiSecretKey);
         $invoiceCurrencyApiUrl = $apiUrl.$invoiceCurrencyEndpoint."?buyer_country=".$buyerCountryCode."&seller_country=".$sellerCountryCode;
-        
+        // Get authorization
+        $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
         // Set header
         $setHeader = [
-            'accesskey: '.$apiKey,
-            'salt: '.$salt,
-            'signature: '.$signature,
-            'timestamp: '.$timestamp,
+            'Authorization: '.$authorization,
             'Content-Type: application/json'
         ];
         /* Create curl factory */

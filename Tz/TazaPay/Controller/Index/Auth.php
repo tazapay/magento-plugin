@@ -481,13 +481,9 @@ class Auth extends \Magento\Framework\App\Action\Action
                     */
                     $method = "POST";
                     $createUserEndpoint = $this->helper->getCreateUserEndpoint();
-                    $salt = $this->helper->generateSalt();
-                    $timestamp = time();
-                    // Generate to_sign
-                    $to_sign = $method.$createUserEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-                    // Get signature
-                    $signature = $this->getSignature($to_sign, $apiSecretKey);
                     $createUserApiUrl = $apiUrl.$createUserEndpoint;
+                    // Get authorization
+                    $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
                     // Make array for passing parameter in request
                     // pass country code instead of country name
                     $userData = [
@@ -504,10 +500,7 @@ class Auth extends \Magento\Framework\App\Action\Action
                 
                     // Set header
                     $setHeader = [
-                        'accesskey: '.$apiKey,
-                        'salt: '.$salt,
-                        'signature: '.$signature,
-                        'timestamp: '.$timestamp,
+                        'Authorization: '.$authorization,
                         'Content-Type: application/json'
                     ];
                     /* Create curl factory */
@@ -609,13 +602,10 @@ class Auth extends \Magento\Framework\App\Action\Action
                     */
                     $method = "POST";
                     $createEscrowEndpoint = $this->helper->getCreateEscrowEndpoint();
-                    $salt = $this->helper->generateSalt();
-                    $timestamp = time();
-                    // Generate to_sign
-                    $to_sign = $method.$createEscrowEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-                    // Get signature
-                    $signature = $this->getSignature($to_sign, $apiSecretKey);
                     $createEscrowApiUrl = $apiUrl.$createEscrowEndpoint;
+                    
+                    // Get authorization
+                    $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
                     
                     $txnDescriptionForEscrow = $this->helper->getTxnDescriptionForEscrow();
                     $escrowTxnType = $this->helper->getEscrowTxnType();
@@ -754,10 +744,7 @@ class Auth extends \Magento\Framework\App\Action\Action
                     $escrowParamsJson = str_replace('"invoice_amount":"'.$escrowParams['invoice_amount'].'"', '"invoice_amount":'.$escrowParams['invoice_amount'].'', $escrowParamsJson);
                     // Set header
                     $setHeader = [
-                        'accesskey: '.$apiKey,
-                        'salt: '.$salt,
-                        'signature: '.$signature,
-                        'timestamp: '.$timestamp,
+                        'Authorization: '.$authorization,
                         'Content-Type: application/json'
                     ];
                     /* Create curl factory */
@@ -870,13 +857,9 @@ class Auth extends \Magento\Framework\App\Action\Action
                         */
                         $method = "POST";
                         $createPaymentEndpoint = $this->helper->getCreatePaymentEndpoint();
-                        $salt = $this->helper->generateSalt();
-                        $timestamp = time();
-                        // Generate to_sign
-                        $to_sign = $method.$createPaymentEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-                        // Get signature
-                        $signature = $this->getSignature($to_sign, $apiSecretKey);
                         $createPaymentApiUrl = $apiUrl.$createPaymentEndpoint;
+                        // Get authorization
+                        $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
                         // CallBackUrl
                         $callBackUrl = $baseUrl.'tazapay/index/callback/';
                         // Make array for passing parameter in request
@@ -892,10 +875,7 @@ class Auth extends \Magento\Framework\App\Action\Action
                         $createPaymentParamsJson = $this->getJsonEncode($createPaymentParams);
                         // Set header
                         $setHeader = [
-                            'accesskey: '.$apiKey,
-                            'salt: '.$salt,
-                            'signature: '.$signature,
-                            'timestamp: '.$timestamp,
+                            'Authorization: '.$authorization,
                             'Content-Type: application/json'
                         ];
                         /* Create curl factory */
@@ -1005,19 +985,19 @@ class Auth extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * Generate signature
-     * $hmacSHA256 is generate hmacSHA256
-     * $signature is convert hmacSHA256 into base64 encode
-     * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
+     * Generate basicAuth
+     * Encode the $basic_auth format into base64 encode
+     * in document: Authorization = "Basic " + base64_encode($basic_auth);
      *
-     * @param mixed $to_sign
+     * @param mixed $apiKey
      * @param mixed $apiSecretKey
      */
-    public function getSignature($to_sign, $apiSecretKey)
+
+    public function basicAuthorization($apiKey, $apiSecretKey)
     {
-        $hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecretKey);
-        $signature = base64_encode($hmacSHA256);
-        return $signature;
+        $basic_auth = $apiKey . ':' . $apiSecretKey;
+		$authorization = "Basic " . base64_encode($basic_auth);
+		return $authorization;
     }
 
     /**

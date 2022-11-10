@@ -306,20 +306,12 @@ class AsyncTazaPayEscrowStatus
      */
     public function getEscrowStatus($apiKey, $apiSecretKey, $apiUrl, $method, $getEscrowEndpoint)
     {
-        $salt = $this->helper->generateSalt();
-        $timestamp = time();
-        // Generate to_sign
-        $to_sign = $method.$getEscrowEndpoint.$salt.$timestamp.$apiKey.$apiSecretKey;
-        // Get signature
-        $signature = $this->getSignature($to_sign, $apiSecretKey);
         $getEscrowApiUrl = $apiUrl.$getEscrowEndpoint;
-        
+        // Get authorization
+        $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
         // Set header
         $setHeader = [
-            'accesskey: '.$apiKey,
-            'salt: '.$salt,
-            'signature: '.$signature,
-            'timestamp: '.$timestamp,
+            'Authorization: '.$authorization,
             'Content-Type: application/json'
         ];
         /* Create curl factory */
@@ -340,17 +332,20 @@ class AsyncTazaPayEscrowStatus
         return $response = $this->jsonHelper->jsonDecode($body);
     }
 
-    /*
-     * generate signature
-     * $hmacSHA256 is generate hmacSHA256
-     * $signature is convert hmacSHA256 into base64 encode
-     * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-    */
-    public function getSignature($to_sign, $apiSecretKey)
+    /**
+     * Generate basicAuth
+     * Encode the $basic_auth format into base64 encode
+     * in document: Authorization = "Basic " + base64_encode($basic_auth);
+     *
+     * @param mixed $apiKey
+     * @param mixed $apiSecretKey
+     */
+
+    public function basicAuthorization($apiKey, $apiSecretKey)
     {
-        $hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecretKey);
-        $signature = base64_encode($hmacSHA256);
-        return $signature;
+        $basic_auth = $apiKey . ':' . $apiSecretKey;
+		$authorization = "Basic " . base64_encode($basic_auth);
+		return $authorization;
     }
 
     /**
