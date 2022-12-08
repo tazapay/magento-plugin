@@ -31,8 +31,7 @@
                 <cgi_url_production>https://api.tazapay.com</cgi_url_production>
                 <tazapay_txn_description_for_escrow>Pay securely with buyer protection</tazapay_txn_description_for_escrow>
                 <tazapay_create_user_endpoint>/v1/user</tazapay_create_user_endpoint>
-                <tazapay_create_escrow_endpoint>/v1/escrow</tazapay_create_escrow_endpoint>
-                <tazapay_create_payment_endpoint>/v1/session/payment</tazapay_create_payment_endpoint>
+                <tazapay_create_checkout_endpoint>/v1/checkout</tazapay_create_checkout_endpoint>
                 <seller_type></seller_type>
                 <multi_seller_marketplace_extension></multi_seller_marketplace_extension>
                 <order_status>pending_payment</order_status>

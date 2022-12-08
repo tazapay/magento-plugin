@@ -205,20 +205,13 @@
                     <comment><![CDATA[Create user Endpoint : /v1/user]]></comment>
                     <config_path>payment/tazapay/tazapay_create_user_endpoint</config_path>
                 </field>
-                <!-- Create Escrow Endpoint -->
-                <field id="tazapay_create_escrow_endpoint" translate="label" sortOrder="170" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
-                    <label>Create Escrow Endpoint</label>
-                    <validate>required-entry no-whitespace</validate>
-                    <comment><![CDATA[Create Escrow Endpoint : /v1/escrow]]></comment>
-                    <config_path>payment/tazapay/tazapay_create_escrow_endpoint</config_path>
-                </field>
 
-                <!-- Create Payment Endpoint -->
-                <field id="tazapay_create_payment_endpoint" translate="label" sortOrder="180" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
-                    <label>Create Payment Endpoint</label>
+                <!-- Create Checkout Endpoint -->
+                <field id="tazapay_create_checkout_endpoint" translate="label" sortOrder="160" type="text" showInDefault="0" showInWebsite="1" showInStore="0">
+                    <label>Create checkout Endpoint</label>
                     <validate>required-entry no-whitespace</validate>
-                    <comment><![CDATA[Create Payment Endpoint : /v1/session/payment]]></comment>
-                    <config_path>payment/tazapay/tazapay_create_payment_endpoint</config_path>
+                    <comment><![CDATA[Create checkout Endpoint : /v1/checkout]]></comment>
+                    <config_path>payment/tazapay/tazapay_create_checkout_endpoint</config_path>
                 </field>
                 
                 <field id="allowspecific" translate="label" type="allowspecific" sortOrder="190" showInDefault="1" showInWebsite="1" canRestore="1">

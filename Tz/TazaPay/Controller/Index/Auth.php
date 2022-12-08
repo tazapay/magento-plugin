@@ -76,11 +76,6 @@ class Auth extends \Magento\Framework\App\Action\Action
     protected $orderService;
 
     /**
-     * @var \Magento\Directory\Model\CountryFactory
-     */
-    protected $countryFactory;
-
-    /**
      * @var \Tz\TazaPay\Logger\Logger
      */
     protected $_logger;
@@ -119,8 +114,6 @@ class Auth extends \Magento\Framework\App\Action\Action
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \Magento\Customer\Api\AccountManagementInterface $customerAccountManagement
      * @param \Magento\Sales\Model\Service\OrderService $orderService
-     * @param \Magento\Framework\View\Result\PageFactory $pageFactory
-     * @param \Magento\Directory\Model\CountryFactory $countryFactory
      * @param \Magento\Framework\Serialize\Serializer\Json $json
      * @param \Tz\TazaPay\Logger\Logger $logger
      * @param OrderRepositoryInterface $orderRepository
@@ -143,8 +136,6 @@ class Auth extends \Magento\Framework\App\Action\Action
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         \Magento\Customer\Api\AccountManagementInterface $customerAccountManagement,
         \Magento\Sales\Model\Service\OrderService $orderService,
-        \Magento\Framework\View\Result\PageFactory $pageFactory,
-        \Magento\Directory\Model\CountryFactory $countryFactory,
         \Magento\Framework\Serialize\Serializer\Json $json,
         \Tz\TazaPay\Logger\Logger $logger,
         OrderRepositoryInterface $orderRepository,
@@ -165,7 +156,6 @@ class Auth extends \Magento\Framework\App\Action\Action
         $this->customerRepository = $customerRepository;
         $this->customerAccountManagement = $customerAccountManagement;
         $this->orderService = $orderService;
-        $this->_countryFactory = $countryFactory;
         $this->_json = $json;
         $this->_logger = $logger;
         $this->orderRepository = $orderRepository;
@@ -187,7 +177,6 @@ class Auth extends \Magento\Framework\App\Action\Action
         $logger->addWriter($writer);
         
         if ($isEnable == 1) {
-            
             $environment = $this->helper->getEnvironment();
             if ($environment == "sandbox") {
                 $apiKey = $this->helper->getSandboxApiKey();
@@ -218,7 +207,6 @@ class Auth extends \Magento\Framework\App\Action\Action
             $customerEmail = $getBillingAddress->getEmail();
             $countryCode = $getBillingAddress->getCountryId();
             
-            // $countryName = $this->getCountryName($countryCode);
             $dialNumber = $this->helper->getPhoneCode($countryCode);
             $telephone = $getBillingAddress->getTelephone();
             $grandTotal = $quote->getGrandTotal();
@@ -237,7 +225,7 @@ class Auth extends \Magento\Framework\App\Action\Action
                 $buyerCountryCode = $countryCode;
             }
             if ($tazapay_buyer['status'] == "success") {
-                $buyerCountryCode = $tazapay_buyer ['data']['country_code'];
+                $buyerCountryCode = $tazapay_buyer['data']['country_code'];
             }
 
             /**
@@ -247,174 +235,26 @@ class Auth extends \Magento\Framework\App\Action\Action
              */
             $sellerId = "";
             $sellerType = $this->helper->getSellerType();
+            
             /*
              * Seller Type is single_seller
              */
             if ($sellerType == "single_seller") {
                 // Get Seller Information
                 $sellerEmail = $this->helper->getSellerEmail();
-                $tazapay_seller =  $this->helper->getTazaPayUserByEmail($sellerEmail);
+                $tazapay_seller = $this->helper->getTazaPayUserByEmail($sellerEmail);
 
-                if ($sellerEmail == $customerEmail) {
-
-                    $this->messageManager->addErrorMessage(
-                        __("Buyer and seller email should not be identical, Please change buyer email address.")
-                    );
-                    $logger->info('Buyer and seller email should not be identical, Please change buyer email address.');
-                    return $resultRedirect->setPath('checkout/cart');
-                }
-
-                if ($tazapay_seller['status'] == "error") {
-                    $this->messageManager->addErrorMessage($tazapay_seller['message']);
-                    $logger->info($tazapay_seller['message']);
-                    return $resultRedirect->setPath('checkout/cart');
-                }
-
+                $this->validateSingleSellerAndBuyerEmailIsSame($tazapay_seller, $sellerEmail, $customerEmail, $logger);
             } elseif ($sellerType == "multi_seller") {
-               
-                $multiSellerMarketPlaceExtension = $this->helper->getMultiSellerMarketplaceExtension();
-                
-                if ($multiSellerMarketPlaceExtension == "ced_marketplace_ext") {
-                    
-                    // Get cart items
-                    $items = $quote->getAllItems();
-                    $productSkus = [];
-                    // Get all products skus from quote items
-                    foreach ($items as $item) {
-                        $productSkus [] = $item->getSku();
-                    }
-                    // Get vendor collection
-                    $vendorProducts = $this->_objectManager->create('Ced\CsMarketplace\Model\Vproducts')
-                            ->getCollection()
-                            ->addFieldToFilter('sku', ['in'=> $productSkus]);
-
-                    // Get all vendor ids from products and make an array
-                    $vendorIds = $vendorProductSkus =  [];
-                    foreach ($vendorProducts as $VendorProduct) {
-                        $vendorIds [] = $VendorProduct->getVendorId();
-                        $vendorProductSkus [] = $VendorProduct->getSku();
-                    }
-                    
-                    $sortProductSkus = sort($productSkus);
-                    $sortVendorProductSkus = sort($vendorProductSkus);
-                    
-                    // If cart items and vendor items are same 
-                    if (($sortProductSkus == $sortVendorProductSkus) 
-                        && (count($productSkus) == count($vendorProductSkus))
-                    ) {
-                        // Check vendorIds is not empty and is array
-                        if (!empty($vendorIds) && is_array($vendorIds)) {
-                            // Get unique vendor ids and array value reindexing
-                            $vendorIds = array_values(array_unique($vendorIds));
-                        }
-                        
-                        $vendorId = "";
-                        if (count($vendorIds)==1) {
-                            // Get vendor id from array
-                            $vendorId = $vendorIds[0];
-                            if (!empty($vendorId)) {
-                                $vendor = $this->_objectManager->get('Ced\CsMarketplace\Model\Vendor')
-                                            ->load($vendorId);
-                                // Get Vendor Data
-                                $vendor->getData();
-                                // Get Vendor E-Mail
-                                $vendorEmail = $vendor->getData('email');
-                                
-                                $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
-
-                                if ($vendorEmail == $customerEmail) {
-
-                                    $this->messageManager->addErrorMessage(
-                                        __("Buyer and seller email should not be identical, Please change buyer email address.")
-                                    );
-                                    $logger->info('Buyer and seller email should not be identical, Please change buyer email address.');
-                                    return $resultRedirect->setPath('checkout/cart');
-                                }
-                                if ($tazapay_seller['status'] == "error") {
-                                    $this->messageManager->addErrorMessage($tazapay_seller['message']);
-                                    $logger->info($tazapay_seller['message']);
-                                    return $resultRedirect->setPath('checkout/cart');
-                                }
-                            }
-                        }
-                    } elseif ((empty($vendorProductSkus))
-                    && (!empty($productSkus) && is_array($productSkus) )) {
-                        // Quote have only admin products
-                        $sellerEmail = $this->helper->getSellerEmail();
-                        $vendorEmail = $sellerEmail;
-                        $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
-                        $sellerId = $tazapay_seller['data']['id'];
-
-                    } else {
-                        // Quote have admin and vendor products
-                        $this->messageManager->addError(
-                            __("Something went wrong. Please contact to store owner.")
-                        );
-                        $resultRedirect->setUrl($successPageUrl);
-                        return $resultRedirect;
-                    } 
-                }
+                $this->validateMultiSellerAndBuyerEmailIsSame($quote, $customerEmail, $logger);
             }
             $sellerCountryCode = null;
 
             if ($tazapay_seller['status'] == "success") {
                 $sellerCountryCode = $tazapay_seller ['data']['country_code'];
             }
-
-            /**
-             *  ===============================================================
-             *         Check buyer country supported using seller country
-             *  ===============================================================
-             */
-            $contryConfig = $this->helper->getCountryConfig($sellerCountryCode);
             
-            if ($contryConfig['status'] == "error") {
-                $this->messageManager->addErrorMessage($tazapay_seller['message']);
-                $logger->info($contryConfig['message']);
-                return $resultRedirect->setPath('checkout/cart');
-            }
-            $buyer_countries = [];
-            $buyerCountryName = $sellerCountryName = null;
-            $buyerCountryName = $this->helper->getCountryName($buyerCountryCode);
-            $sellerCountryName = $this->helper->getCountryName($sellerCountryCode);
-            
-            if ($contryConfig['status'] == "success") {
-                $buyer_countries = $contryConfig ['data']['buyer_countries'];
-                if (in_array($buyerCountryCode, $buyer_countries)) {
-                    /**
-                     *  ===============================================================
-                     *                  Check supported invoice currency
-                     *  ===============================================================
-                     */
-                    $invoiceConfigCurrency = $this->helper->getInvoiceCurrencyConfig($buyerCountryCode, $sellerCountryCode);
-                    
-                    if ($invoiceConfigCurrency['status'] == "error") {
-                        $invoiceConfigCurrency['message'];
-                        $this->messageManager->addErrorMessage($invoiceConfigCurrency['message']);
-                        $logger->info($invoiceConfigCurrency['message']);
-                        return $resultRedirect->setPath('checkout/cart');
-                    }
-                    if ($invoiceConfigCurrency['status'] == "success") {
-                        $supportedCurrency = $invoiceConfigCurrency['data']['currencies'];
-
-                        if (!empty($supportedCurrency) && in_array($currency, $supportedCurrency)) {
-                            $isSupportedCurrency = true;
-                        } else {
-                            $currencyNotSupport = "Transactions between buyers from ".$buyerCountryName." and sellers from ".$sellerCountryName." are currently not supported in ".$currency;
-                            $this->messageManager->addErrorMessage($currencyNotSupport);
-                            $logger->info($currencyNotSupport);
-                            return $resultRedirect->setPath('checkout/cart');
-
-                        }
-                    }
-                } else {
-                    $countryNotSupport = "Transactions between buyers from ".$buyerCountryName." and sellers from ".$sellerCountryName." are currently not supported";
-                    $this->messageManager->addErrorMessage($countryNotSupport);
-                    $logger->info($countryNotSupport);
-                    return $resultRedirect->setPath('checkout/cart');
-                }
-                
-            }
+            $isSupportedCurrency = $this->checkBuyerCountrySupportedBySellerCountry($sellerCountryCode, $buyerCountryCode, $currency, $logger);
             
             if ($isSupportedCurrency == true) {
                
@@ -468,25 +308,43 @@ class Auth extends \Magento\Framework\App\Action\Action
                 if ($tazapay_buyer['status'] == "success") {
                     $buyerTazaPayAccountUUID = $tazapay_buyer ['data']['id'];
                 }
-                
-                if (!empty($buyerTazaPayAccountUUID)) {
-                    $customer_account_id = $buyerTazaPayAccountUUID;
-                } else {
-                    $customerEmail = $getBillingAddress->getEmail();
 
-                    /*
-                    *==================================*
-                    *          Create user
-                    *==================================*
-                    */
-                    $method = "POST";
-                    $createUserEndpoint = $this->helper->getCreateUserEndpoint();
-                    $createUserApiUrl = $apiUrl.$createUserEndpoint;
-                    // Get authorization
-                    $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
-                    // Make array for passing parameter in request
-                    // pass country code instead of country name
-                    $userData = [
+                $customerEmail = $getBillingAddress->getEmail();
+                $items = $quote->getAllItems();
+                $storeName = $this->getStoreName();
+                $transactionDescriptionArr = [];
+                
+                foreach ($items as $item) {
+                    $qty_item = $item->getQty()." x ".$item->getName();
+                    $transactionDescriptionArr [] = $qty_item;
+                }
+                
+                $transactionDescriptionItems = implode(", ", $transactionDescriptionArr);
+                $transactionDescription = $storeName.": ".$transactionDescriptionItems;
+                
+
+                if ($sellerType == "single_seller") {
+                    $sellerId = $this->getSellerId();
+                } elseif ($sellerType == "multi_seller") {
+                    $sellerId = $this->getMultiSellerId($successPageUrl);
+                }
+
+                /*
+                *==================================*
+                *          Create checkout
+                *==================================*
+                */
+                $method = "POST";
+                
+                $createCheckoutEndpoint = $this->helper->getCheckoutEndpoint();
+                $createCheckoutApiUrl = $apiUrl.$createCheckoutEndpoint;
+                // Get authorization
+                $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
+                $callBackUrl = $baseUrl.'tazapay/index/callback/';
+                // Make array for passing parameter in request
+                // pass country code instead of country name
+                $checkoutData = [
+                    "buyer" => [
                         "email"=> $customerEmail,
                         "first_name"=> $firstName,
                         "last_name"=> $lastName,
@@ -494,94 +352,131 @@ class Auth extends \Magento\Framework\App\Action\Action
                         "contact_number"=> $telephone,
                         "country"=> $countryCode,
                         "ind_bus_type" => "Individual"
-                    ];
-                    // Convert array to json
-                    $params = $this->getJsonEncode($userData);
+                    ],
+                    "seller_id" => $sellerId,
+                    "fee_paid_by" => $this->helper->getEscrowFeePaidBy(),
+                    "invoice_currency" => $currency,
+                    "invoice_amount" => $grandTotal,
+                    "txn_description" => $transactionDescription,
+                    "complete_url" => $successPageUrl,
+                    "error_url" => $successPageUrl,
+                    "callback_url" => $callBackUrl
+                ];
+
+                // Convert array to json
+                $params = $this->getJsonEncode($checkoutData);
                 
-                    // Set header
-                    $setHeader = [
-                        'Authorization: '.$authorization,
-                        'Content-Type: application/json'
-                    ];
-                    /* Create curl factory */
-                    $httpAdapter = $this->curlFactory->create();
-                    
-                    // Initiate request
-                    $httpAdapter->write(
-                        \Zend_Http_Client::POST, // POST method
-                        $createUserApiUrl, // api url
-                        '1.1', // curl http client version
-                        $setHeader, // set header
-                        $params // pass parameter with json format
-                    );
-                    // execute api request
-                    $result = $httpAdapter->read();
-                    // get response
-                    $body = \Zend_Http_Response::extractBody($result);
+                $params = stripslashes($params);
+                $params = str_replace('"invoice_amount":"'.$checkoutData['invoice_amount'].'"', '"invoice_amount":'.$checkoutData['invoice_amount'].'', $params);
 
-                    $this->_logger->info("OrderIncrementID:- ".$increment_id.". CreateUserResponse:-".$body);
-                    /* convert JSON to Array */
-                    $response = $this->jsonHelper->jsonDecode($body);
-                    $status = $response['status'];
-                    if ($status == "error" && $status !="success") {
-                        $create_user_error_msg = "";
-                        $create_user_error_msg = "Create Tazapay User Error: ".$response['message'];
-                        foreach ($response['errors'] as $key => $error) {
-                            if (isset($error['code'])) {
-                                $create_user_error_msg .= ", code: ".$error['code'];
-                            }
-                            if (isset($error['message'])) {
-                                $create_user_error_msg .= ", Message: ".$error['message'];
-                            }
-                            if (isset($error['remarks'])) {
-                                $create_user_error_msg .= ", Remarks: ".$error['remarks'];
-                            }
-                        }
-                        $create_user_error_msg;
-                        /*
-                        *===============================================================*
-                        *          Create Tazapay User Error save order comment
-                        *===============================================================*
-                        */
-                        $comment = $create_user_error_msg;
-                        $order = $this->orderRepository->get($orderId);
-                        if ($order->canComment()) {
-                            $history = $this->orderHistoryFactory->create()
-                                ->setStatus($order->getStatus())
-                                ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                                ->setComment(
-                                    __('Comment: %1.', $comment)
-                                );
-                            $history->setIsCustomerNotified(false)
-                                    ->setIsVisibleOnFront(true);
+                $logger->info('Checkout api with follwoing params'.$params);
 
-                            $order->addStatusHistory($history);
-                            $this->orderRepository->save($order);
+                // Set header
+                $setHeader = [
+                    'Authorization: '.$authorization,
+                    'Content-Type: application/json'
+                ];
+                /* Create curl factory */
+                $httpAdapter = $this->curlFactory->create();
+                
+                // Initiate request
+                $httpAdapter->write(
+                    \Zend_Http_Client::POST, // POST method
+                    $createCheckoutApiUrl, // api url
+                    '1.1', // curl http client version
+                    $setHeader, // set header
+                    $params // pass parameter with json format
+                );
+               
+                // execute api request
+                $result = $httpAdapter->read();
+                // get response
+                $body = \Zend_Http_Response::extractBody($result);
+
+                $this->_logger->info("OrderIncrementID:- ".$increment_id.". CreateCheckoutResponse:-".$body);
+                /* convert JSON to Array */
+                $response = $this->jsonHelper->jsonDecode($body);
+                
+                $status = $response['status'];
+                if ($status == "error" && $status !="success") {
+                    $create_checkout_error_msg = "";
+                    $create_checkout_error_msg = "Create Tazapay Checkout Error: ".$response['message'];
+                    foreach ($response['errors'] as $key => $error) {
+                        if (isset($error['code'])) {
+                            $create_checkout_error_msg .= ", code: ".$error['code'];
                         }
-                        $this->messageManager->addError($create_user_error_msg);
-                        $resultRedirect->setUrl($successPageUrl);
-                        return $resultRedirect ;
-                    } elseif ($status == "success" && $status !="error") {
-                        $customer_account_id = $response['data']['account_id'];
-                    } else {
-                        $this->messageManager->addError(
-                            __("Something went wrong. Please contact to store owner.")
-                        );
-                        $resultRedirect->setUrl($successPageUrl);
-                        return $resultRedirect ;
+                        if (isset($error['message'])) {
+                            $create_checkout_error_msg .= ", Message: ".$error['message'];
+                        }
+                        if (isset($error['remarks'])) {
+                            $create_checkout_error_msg .= ", Remarks: ".$error['remarks'];
+                        }
                     }
+                    $create_checkout_error_msg;
+                    /*
+                    *===============================================================*
+                    *          Create Tazapay Checkout Error save order comment
+                    *===============================================================*
+                    */
+                    $comment = $create_checkout_error_msg;
+                    $order = $this->orderRepository->get($orderId);
+                    if ($order->canComment()) {
+                        $history = $this->orderHistoryFactory->create()
+                            ->setStatus($order->getStatus())
+                            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                            ->setComment(
+                                __('Comment: %1.', $comment)
+                            );
+                        $history->setIsCustomerNotified(false)
+                                ->setIsVisibleOnFront(true);
+
+                        $order->addStatusHistory($history);
+                        $this->orderRepository->save($order);
+                    }
+                    $this->messageManager->addError($create_checkout_error_msg);
+                    $resultRedirect->setUrl($successPageUrl);
+                    return $resultRedirect ;
+                } elseif ($status == "success" && $status !="error") {
+                    $customer_account_id = $response['data']['buyer']['id'];
+                    $redirectionUrl = $response['data']['redirect_url'];
+                    $txn_no = $response['data']['txn_no'];
+                    $paymentOrder = $order->getPayment();
+
+                    $paymentQuote->setData('tazapay_create_payment_redirect_url', $redirectionUrl);
+                    $paymentOrder->setData('tazapay_create_payment_redirect_url', $redirectionUrl);
+
+                    // set payment data to quote and order
+                    $paymentQuote->setData('buyer_tazapay_account_uuid', $customer_account_id);
+                    $paymentOrder->setData('buyer_tazapay_account_uuid', $customer_account_id);
+                    $paymentQuote->setData('escrow_txn_no', $txn_no);
+                    $paymentOrder->setData('escrow_txn_no', $txn_no);
+                    $paymentQuote->setData('tazapay_payer_email', $customerEmail);
+                    $paymentOrder->setData('tazapay_payer_email', $customerEmail);
+
+                    // Save payment data to quote and order
+                    $paymentQuote->save();
+                    $paymentOrder->save();
+                
+                    $resultRedirect->setUrl($redirectionUrl);
+                    return $resultRedirect ;
+                } else {
+                    $this->messageManager->addError(
+                        __("Something went wrong. Please contact to store owner.")
+                    );
+                    $resultRedirect->setUrl($successPageUrl);
+                    return $resultRedirect ;
                 }
-                // If Tazapay account UUID get, it will create escrow between buyer and seller
+
                 if (!empty($customer_account_id)) {
                     /*
                     *===========================================================*
-                    *          Tazapay User Information save order comment
+                    *          Tazapay Checkout Information save order comment
                     *===========================================================*
                     */
-                    $tazapay_user_msg = "";
-                    $tazapay_user_msg = "Tazapay E-Mail: ".$customerEmail;
-                    $tazapay_user_msg .= ", Tazapay account UUID: ".$customer_account_id;
-                    $comment = $tazapay_user_msg;
+                    $tazapay_checkout_msg = "";
+                    $tazapay_checkout_msg = "Tazapay E-Mail: ".$customerEmail;
+                    $tazapay_checkout_msg .= ", Tazapay account UUID: ".$customer_account_id;
+                    $comment = $tazapay_checkout_msg;
                     $order = $this->orderRepository->get($orderId);
                     if ($order->canComment()) {
                         $history = $this->orderHistoryFactory->create()
@@ -595,373 +490,6 @@ class Auth extends \Magento\Framework\App\Action\Action
                         $order->addStatusHistory($history);
                         $this->orderRepository->save($order);
                     }
-                    /*
-                    *==================================*
-                    *          Create Escrow
-                    *==================================*
-                    */
-                    $method = "POST";
-                    $createEscrowEndpoint = $this->helper->getCreateEscrowEndpoint();
-                    $createEscrowApiUrl = $apiUrl.$createEscrowEndpoint;
-                    
-                    // Get authorization
-                    $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
-                    
-                    $txnDescriptionForEscrow = $this->helper->getTxnDescriptionForEscrow();
-                    $escrowTxnType = $this->helper->getEscrowTxnType();
-                    $releaseMechanism = $this->helper->getReleaseMechanism();
-                    $escrowFeePaidBy = $this->helper->getEscrowFeePaidBy();
-                    
-                    // retrieve quote items array
-                    $items = $quote->getAllItems();
-                    $storeName = $this->getStoreName();
-                    $transactionDescriptionArr = [];
-                    
-                    foreach ($items as $item) {
-                        $qty_item = $item->getQty()." x ".$item->getName();
-                        $transactionDescriptionArr [] = $qty_item;
-                    }
-                    
-                    $transactionDescriptionItems = implode(", ", $transactionDescriptionArr);
-                    $transactionDescription = $storeName.": ".$transactionDescriptionItems;
-                    $transactionDescription;
-                    $sellerId = "";
-                    $sellerType = $this->helper->getSellerType();
-                    /*
-                    * Seller Type is single_seller
-                    */
-                    if ($sellerType == "single_seller") {
-                        // Get Seller Information
-                        $sellerEmail = $this->helper->getSellerEmail();
-                        $vendorEmail = $sellerEmail;
-                        $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
-                        $sellerId = $tazapay_seller['data']['id'];
-                        
-                    } elseif ($sellerType == "multi_seller") {
-                        /*
-                        * Seller Type is multi_seller
-                        */
-                        $multiSellerMarketPlaceExtension = $this->helper->getMultiSellerMarketplaceExtension();
-                        /*
-                        * CED Marketplace
-                        * multiSellerMarketPlaceExtension is ced_marketplace_ext
-                        * Get seller tazapay accocunt uuid from quote items
-                        */
-                        if ($multiSellerMarketPlaceExtension == "ced_marketplace_ext") {
-                            $sellerId = "";
-                            // Get cart items
-                            $quoteItems = $quote->getAllItems();
-                            $productSkus = [];
-                            // Get all products skus from quote items
-                            foreach ($quoteItems as $item) {
-                                $productSkus [] = $item->getSku();
-                            }
-
-                            // Get vendor collection
-                            $vendorProducts = $this->_objectManager->create('Ced\CsMarketplace\Model\Vproducts')
-                                    ->getCollection()
-                                    ->addFieldToFilter('sku', ['in'=> $productSkus]);
-                            
-                            // Get all vendor ids from products and make an array
-                            $vendorIds = $vendorProductSkus = [];
-                            foreach ($vendorProducts as $VendorProduct) {
-                                $vendorIds [] = $VendorProduct->getVendorId();
-                                $vendorProductSkus [] = $VendorProduct->getSku();
-                            }
-                            
-                            $sortProductSkus = sort($productSkus);
-                            $sortVendorProductSkus = sort($vendorProductSkus);
-
-                            // If cart items skus and vendor items skus are same
-                            if (($sortProductSkus == $sortVendorProductSkus)
-                                && (count($productSkus) == count($vendorProductSkus))
-                            ) {
-                                // Check vendorIds is not empty and is array
-                                if (!empty($vendorIds) && is_array($vendorIds)) {
-                                    // Get unique vendor ids and array value re-indexing
-                                    $vendorIds = array_values(array_unique($vendorIds));
-                                }
-                                $vendorId = $vendorIds[0];
-                                
-                                if (!empty($vendorId)) {
-                                    $vendor = $this->_objectManager->get('Ced\CsMarketplace\Model\Vendor')->load($vendorId);
-                                    // Get Vendor Data
-                                    $vendor->getData();
-                                    // Get Vendor E-Mail
-                                    $vendorEmail = $vendor->getData('email');
-                                    // Get tazapay user detail
-                                    $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
-                                    $sellerId = $tazapay_seller['data']['id'];
-                                } else {
-                                    $this->messageManager->addError(
-                                        __("Something went wrong. Please contact to store owner.")
-                                    );
-                                    $resultRedirect->setUrl($successPageUrl);
-                                    return $resultRedirect;
-                                }
-                            } elseif ((empty($vendorProductSkus))
-                                && (!empty($productSkus) && is_array($productSkus) )) {
-                                // Quote have only admin products
-                                $sellerEmail = $this->helper->getSellerEmail();
-                                $vendorEmail = $sellerEmail;
-                                $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
-                                $sellerId = $tazapay_seller['data']['id'];
-
-                            } else {
-                                // Quote have admin and vendor products
-                                $this->messageManager->addError(
-                                    __("Something went wrong. Please contact to store owner.")
-                                );
-                                $resultRedirect->setUrl($successPageUrl);
-                                return $resultRedirect;
-                            }
-                        }
-                    }
-                    
-                    if (!empty($sellerId)) {
-                        // Make array for passing parameter in request
-                        $escrowParams = [
-                            "initiated_by" => $customer_account_id,
-                            "buyer_id" => $customer_account_id,
-                            "seller_id" => $sellerId,
-                            "txn_description" => $transactionDescription,
-                            "invoice_currency" => $currency,
-                            "transaction_source" => 'magento',
-                            "invoice_amount" => $grandTotal
-                        ];
-                        $this->_logger->info("escrowParams:- ".json_encode($escrowParams));
-                    } else {
-                        $this->messageManager->addError(
-                            __("Something went wrong. Please contact to store owner.")
-                        );
-                        $resultRedirect->setUrl($successPageUrl);
-                        return $resultRedirect;
-                    }
-                    
-                    // array to json
-                    $escrowParamsJson = $this->getJsonEncode($escrowParams);
-                    // Convert invoice_amount string to number
-                    $escrowParamsJson = str_replace('"invoice_amount":"'.$escrowParams['invoice_amount'].'"', '"invoice_amount":'.$escrowParams['invoice_amount'].'', $escrowParamsJson);
-                    // Set header
-                    $setHeader = [
-                        'Authorization: '.$authorization,
-                        'Content-Type: application/json'
-                    ];
-                    /* Create curl factory */
-                    $httpAdapter = $this->curlFactory->create();
-                    // Initiate request
-                    $httpAdapter->write(
-                        \Zend_Http_Client::POST, // POST method
-                        $createEscrowApiUrl, // api url
-                        '1.1', // curl http client version
-                        $setHeader, // set header
-                        $escrowParamsJson // pass parameter with json format
-                    );
-                    // execute api request
-                    $result = $httpAdapter->read();
-                    // get response
-                    $body = \Zend_Http_Response::extractBody($result);
-                    $this->_logger->info("OrderIncrementID:- ".$increment_id.". CreateEscrowResponse:-".$body);
-                    /* Convert JSON to Array */
-                    $response = $this->jsonHelper->jsonDecode($body);
-                    
-                    $status = $response['status'];
-                    if ($status == "error" && $status !="success") {
-                        $create_escrow_error_msg = "";
-                        $create_escrow_error_msg = "Create Escrow Error: ".$response['message'];
-                        foreach ($response['errors'] as $key => $error) {
-                            if (isset($error['code'])) {
-                                $create_escrow_error_msg .= ", code: ".$error['code'];
-                            }
-                            if (isset($error['message'])) {
-                                $create_escrow_error_msg .= ", Message: ".$error['message'];
-                            }
-                            if (isset($error['remarks'])) {
-                                $create_escrow_error_msg .= ", Remarks: ".$error['remarks'];
-                            }
-                        }
-                        $create_escrow_error_msg;
-                        /*
-                        *===========================================================*
-                        *          Create Escrow Error save order comment
-                        *===========================================================*
-                        */
-                        
-                        $comment = $create_escrow_error_msg;
-                        $order = $this->orderRepository->get($orderId);
-                        if ($order->canComment()) {
-                            $history = $this->orderHistoryFactory->create()
-                                ->setStatus($order->getStatus())
-                                ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                                ->setComment(
-                                    __('Comment: %1.', $comment)
-                                );
-                            $history->setIsCustomerNotified(false)
-                                    ->setIsVisibleOnFront(true);
-                            $order->addStatusHistory($history);
-                            $this->orderRepository->save($order);
-                        }
-                        $this->messageManager->addError($create_escrow_error_msg);
-                        $resultRedirect->setUrl($successPageUrl);
-                        return $resultRedirect ;
-                    
-                    } elseif ($status == "success" && $status !="error") {
-                        $txn_no = $response['data']['txn_no'];
-                        /*
-                        *===========================================================*
-                        *          Create Escrow success save order comment
-                        *===========================================================*
-                        */
-
-                        $escrow_success_msg = "";
-                        $escrow_success_msg = "Create Escrow Success: ".$response['message'].". ";
-
-                        foreach ($response['data'] as $key => $value) {
-                            $escrow_success_msg .= $key.": ".$value.". ";
-                        }
-                        $escrow_success_msg;
-
-                        $comment = $escrow_success_msg;
-                        $order = $this->orderRepository->get($orderId);
-                        if ($order->canComment()) {
-                            $history = $this->orderHistoryFactory->create()
-                                ->setStatus($order->getStatus())
-                                ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                                ->setComment(
-                                    __('Comment: %1.', $comment)
-                                );
-                            $history->setIsCustomerNotified(false)
-                                    ->setIsVisibleOnFront(true);
-
-                            $order->addStatusHistory($history);
-                            $this->orderRepository->save($order);
-                        }
-                        // Get quote and order payment data
-                        $paymentQuote = $quote->getPayment();
-                        $paymentOrder = $order->getPayment();
-                        // set payment data to quote and order
-                        $paymentQuote->setData('buyer_tazapay_account_uuid', $customer_account_id);
-                        $paymentOrder->setData('buyer_tazapay_account_uuid', $customer_account_id);
-                        $paymentQuote->setData('escrow_txn_no', $txn_no);
-                        $paymentOrder->setData('escrow_txn_no', $txn_no);
-                        $paymentQuote->setData('tazapay_payer_email', $customerEmail);
-                        $paymentOrder->setData('tazapay_payer_email', $customerEmail);
-                        // Save payment data to quote and order
-                        $paymentQuote->save();
-                        $paymentOrder->save();
-                        
-                        /*
-                        *==================================*
-                        *          Create Payment
-                        *==================================*
-                        */
-                        $method = "POST";
-                        $createPaymentEndpoint = $this->helper->getCreatePaymentEndpoint();
-                        $createPaymentApiUrl = $apiUrl.$createPaymentEndpoint;
-                        // Get authorization
-                        $authorization = $this->basicAuthorization($apiKey, $apiSecretKey);
-                        // CallBackUrl
-                        $callBackUrl = $baseUrl.'tazapay/index/callback/';
-                        // Make array for passing parameter in request
-                        // $successPageUrl = $completeUrl;
-                        $createPaymentParams = [
-                            "txn_no" => $txn_no,
-                            "percentage" => 0,
-                            "complete_url" => $successPageUrl,
-                            "error_url" => $successPageUrl,
-                            "callback_url" => $callBackUrl
-                        ];
-                        // array to json
-                        $createPaymentParamsJson = $this->getJsonEncode($createPaymentParams);
-                        // Set header
-                        $setHeader = [
-                            'Authorization: '.$authorization,
-                            'Content-Type: application/json'
-                        ];
-                        /* Create curl factory */
-                        $httpAdapter = $this->curlFactory->create();
-                        // Initiate request
-                        $httpAdapter->write(
-                            \Zend_Http_Client::POST, // POST method
-                            $createPaymentApiUrl, // api url
-                            '1.1', // curl http client version
-                            $setHeader, // set header
-                            $createPaymentParamsJson // pass parameter with json format
-                        );
-                        // execute api request
-                        $result = $httpAdapter->read();
-                        // get response
-                        $body = \Zend_Http_Response::extractBody($result);
-                        $this->_logger->info("OrderIncrementID:- ".$increment_id.". CreatePaymentResponse:-".$body);
-                        /* convert JSON to Array */
-                        $response = $this->jsonHelper->jsonDecode($body);
-                    
-                        $status = $response['status'];
-                        if ($status == "error" && $status !="success") {
-                            $create_payment_error_msg = "";
-                            $create_payment_error_msg = "Create Payment Error: ".$response['message'];
-                            foreach ($response['errors'] as $key => $error) {
-                                if (isset($error['code'])) {
-                                    $create_payment_error_msg .= ", code: ".$error['code'];
-                                }
-                                if (isset($error['message'])) {
-                                    $create_payment_error_msg .= ", Message: ".$error['message'];
-                                }
-                                if (isset($error['remarks'])) {
-                                    $create_payment_error_msg .= ", Remarks: ".$error['remarks'];
-                                }
-                            }
-                            $create_payment_error_msg;
-                            /*
-                            *===========================================================*
-                            *          Create Payment Error save order comment
-                            *===========================================================*
-                            */
-                            $comment = $create_payment_error_msg;
-                            $order = $this->orderRepository->get($orderId);
-                            if ($order->canComment()) {
-                                $history = $this->orderHistoryFactory->create()
-                                    ->setStatus($order->getStatus())
-                                    ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                                    ->setComment(
-                                        __('Comment: %1.', $comment)
-                                    );
-                                $history->setIsCustomerNotified(false)
-                                        ->setIsVisibleOnFront(true);
-                                $order->addStatusHistory($history);
-                                $this->orderRepository->save($order);
-                            }
-                            $this->messageManager->addError($create_payment_error_msg);
-                            $resultRedirect->setUrl($successPageUrl);
-                            return $resultRedirect ;
-                        } elseif ($status == "success" && $status !="error") {
-                            /*
-                            * Redirect to tazapay site for payment
-                            */
-                            $redirectionUrl = $response['data']['redirect_url'];
-
-                            $paymentQuote->setData('tazapay_create_payment_redirect_url', $redirectionUrl);
-                            $paymentOrder->setData('tazapay_create_payment_redirect_url', $redirectionUrl);
-                            // Save payment data to quote and order
-                            $paymentQuote->save();
-                            $paymentOrder->save();
-                        
-                            $resultRedirect->setUrl($redirectionUrl);
-                            return $resultRedirect ;
-                        } else {
-                            $this->messageManager->addError(
-                                __("Something went wrong. Please contact to store owner")
-                            );
-                            $resultRedirect->setUrl($successPageUrl);
-                            return $resultRedirect ;
-                        }
-                    } else {
-                        $this->messageManager->addError(
-                            __("Something went wrong. Please contact to store owner")
-                        );
-                        $resultRedirect->setUrl($successPageUrl);
-                        return $resultRedirect ;
-                    }
                 } else {
                     $this->messageManager->addError(
                         __("Something went wrong. Please contact to store owner")
@@ -974,14 +502,272 @@ class Auth extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * Get countryname
+     * Check buyer country supported using seller country
      *
-     * @param mixed $countryCode
+     * @param mixed $sellerCountryCode, $buyerCountryCode, $logger
      */
-    public function getCountryName($countryCode)
+    public function checkBuyerCountrySupportedBySellerCountry($sellerCountryCode, $buyerCountryCode, $currency, $logger)
     {
-        $country = $this->_countryFactory->create()->loadByCode($countryCode);
-        return $country->getName();
+        $contryConfig = $this->helper->getCountryConfig($sellerCountryCode);
+        $resultRedirect = $this->resultRedirectFactory->create();
+        
+        if ($contryConfig['status'] == "error") {
+            $this->messageManager->addErrorMessage($tazapay_seller['message']);
+            $logger->info($contryConfig['message']);
+            return $resultRedirect->setPath('checkout/cart');
+        }
+        $buyer_countries = [];
+        $buyerCountryName = $sellerCountryName = null;
+        $buyerCountryName = $this->helper->getCountryName($buyerCountryCode);
+        $sellerCountryName = $this->helper->getCountryName($sellerCountryCode);
+        
+        if ($contryConfig['status'] == "success") {
+            $buyer_countries = $contryConfig ['data']['buyer_countries'];
+            if (in_array($buyerCountryCode, $buyer_countries)) {
+                /**
+                 *  ===============================================================
+                 *                  Check supported invoice currency
+                 *  ===============================================================
+                 */
+                $invoiceConfigCurrency = $this->helper->getInvoiceCurrencyConfig($buyerCountryCode, $sellerCountryCode);
+                
+                if ($invoiceConfigCurrency['status'] == "error") {
+                    $invoiceConfigCurrency['message'];
+                    $this->messageManager->addErrorMessage($invoiceConfigCurrency['message']);
+                    $logger->info($invoiceConfigCurrency['message']);
+                    return $resultRedirect->setPath('checkout/cart');
+                }
+                if ($invoiceConfigCurrency['status'] == "success") {
+                    $supportedCurrency = $invoiceConfigCurrency['data']['currencies'];
+
+                    if (!empty($supportedCurrency) && in_array($currency, $supportedCurrency)) {
+                        return true;
+                    } else {
+                        $currencyNotSupport = "Transactions between buyers from ".$buyerCountryName." and sellers from ".$sellerCountryName." are currently not supported in ".$currency;
+                        $this->messageManager->addErrorMessage($currencyNotSupport);
+                        $logger->info($currencyNotSupport);
+                        return $resultRedirect->setPath('checkout/cart');
+                    }
+                }
+            } else {
+                $countryNotSupport = "Transactions between buyers from ".$buyerCountryName." and sellers from ".$sellerCountryName." are currently not supported";
+                $this->messageManager->addErrorMessage($countryNotSupport);
+                $logger->info($countryNotSupport);
+                return $resultRedirect->setPath('checkout/cart');
+            }
+        }
+    }
+
+    /**
+     * Check if Seller and Buyer EmailId is same for Single Seller
+     *
+     * @param mixed $tazapay_seller, $sellerEmail, $customerEmail, $logger
+     */
+    public function validateSingleSellerAndBuyerEmailIsSame($tazapay_seller, $sellerEmail, $customerEmail, $logger)
+    {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
+        if ($sellerEmail == $customerEmail) {
+
+            $this->messageManager->addErrorMessage(
+                __("Buyer and seller email should not be identical, Please change buyer email address.")
+            );
+            $logger->info('Buyer and seller email should not be identical, Please change buyer email address.');
+            return $resultRedirect->setPath('checkout/cart');
+        }
+
+        if ($tazapay_seller['status'] == "error") {
+            $this->messageManager->addErrorMessage($tazapay_seller['message']);
+            $logger->info($tazapay_seller['message']);
+            return $resultRedirect->setPath('checkout/cart');
+        }
+    }
+
+    /**
+     * Check if Seller and Buyer EmailId is same for Multi Seller
+     *
+     * @param mixed $quote, $customerEmail, $logger
+     */
+    public function validateMultiSellerAndBuyerEmailIsSame($quote, $customerEmail, $logger)
+    {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
+        $multiSellerMarketPlaceExtension = $this->helper->getMultiSellerMarketplaceExtension();
+                
+        if ($multiSellerMarketPlaceExtension == "ced_marketplace_ext") {
+            
+            // Get cart items
+            $items = $quote->getAllItems();
+            $productSkus = [];
+            // Get all products skus from quote items
+            foreach ($items as $item) {
+                $productSkus [] = $item->getSku();
+            }
+            // Get vendor collection
+            $vendorProducts = $this->_objectManager->create('Ced\CsMarketplace\Model\Vproducts')
+                    ->getCollection()
+                    ->addFieldToFilter('sku', ['in'=> $productSkus]);
+
+            // Get all vendor ids from products and make an array
+            $vendorIds = $vendorProductSkus =  [];
+            foreach ($vendorProducts as $VendorProduct) {
+                $vendorIds [] = $VendorProduct->getVendorId();
+                $vendorProductSkus [] = $VendorProduct->getSku();
+            }
+            
+            $sortProductSkus = sort($productSkus);
+            $sortVendorProductSkus = sort($vendorProductSkus);
+            
+            // If cart items and vendor items are same 
+            if (($sortProductSkus == $sortVendorProductSkus) 
+                && (count($productSkus) == count($vendorProductSkus))
+            ) {
+                // Check vendorIds is not empty and is array
+                if (!empty($vendorIds) && is_array($vendorIds)) {
+                    // Get unique vendor ids and array value reindexing
+                    $vendorIds = array_values(array_unique($vendorIds));
+                }
+                
+                $vendorId = "";
+                if (count($vendorIds)==1) {
+                    // Get vendor id from array
+                    $vendorId = $vendorIds[0];
+                    if (!empty($vendorId)) {
+                        $vendor = $this->_objectManager->get('Ced\CsMarketplace\Model\Vendor')
+                                    ->load($vendorId);
+                        // Get Vendor Data
+                        $vendor->getData();
+                        // Get Vendor E-Mail
+                        $vendorEmail = $vendor->getData('email');
+                        
+                        $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
+
+                        if ($vendorEmail == $customerEmail) {
+
+                            $this->messageManager->addErrorMessage(
+                                __("Buyer and seller email should not be identical, Please change buyer email address.")
+                            );
+                            $logger->info('Buyer and seller email should not be identical, Please change buyer email address.');
+                            return $resultRedirect->setPath('checkout/cart');
+                        }
+                        if ($tazapay_seller['status'] == "error") {
+                            $this->messageManager->addErrorMessage($tazapay_seller['message']);
+                            $logger->info($tazapay_seller['message']);
+                            return $resultRedirect->setPath('checkout/cart');
+                        }
+                    }
+                }
+            } else {
+                // Quote have admin and vendor products
+                $this->messageManager->addError(
+                    __("Something went wrong. Please contact to store owner.")
+                );
+                $resultRedirect->setUrl($successPageUrl);
+                return $resultRedirect;
+            } 
+        }
+    }
+
+    /**
+     * If Seller Type is Single Seller
+     *
+     */
+    public function getSellerId()
+    {
+        // Get Seller Information
+        $sellerEmail = $this->helper->getSellerEmail();
+        $vendorEmail = $sellerEmail;
+        $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
+        $sellerId = $tazapay_seller['data']['id'];
+        return $sellerId;
+    }
+
+    /**
+     * If Seller Type is Multi Seller
+     *
+     * @param mixed $successPageUrl
+     */
+    public function getMultiSellerId($successPageUrl)
+    {
+        $resultRedirect = $this->resultRedirectFactory->create();
+        /*
+        * Seller Type is multi_seller
+        */
+        $multiSellerMarketPlaceExtension = $this->helper->getMultiSellerMarketplaceExtension();
+        /*
+        * CED Marketplace
+        * multiSellerMarketPlaceExtension is ced_marketplace_ext
+        * Get seller tazapay accocunt uuid from quote items
+        */
+        if ($multiSellerMarketPlaceExtension == "ced_marketplace_ext") {
+            $sellerId = "";
+            // Get cart items
+            $quoteItems = $quote->getAllItems();
+            $productSkus = [];
+            // Get all products skus from quote items
+            foreach ($quoteItems as $item) {
+                $productSkus [] = $item->getSku();
+            }
+
+            // Get vendor collection
+            $vendorProducts = $this->_objectManager->create('Ced\CsMarketplace\Model\Vproducts')
+                    ->getCollection()
+                    ->addFieldToFilter('sku', ['in'=> $productSkus]);
+            
+            // Get all vendor ids from products and make an array
+            $vendorIds = $vendorProductSkus = [];
+            foreach ($vendorProducts as $VendorProduct) {
+                $vendorIds [] = $VendorProduct->getVendorId();
+                $vendorProductSkus [] = $VendorProduct->getSku();
+            }
+            
+            $sortProductSkus = sort($productSkus);
+            $sortVendorProductSkus = sort($vendorProductSkus);
+
+            // If cart items skus and vendor items skus are same
+            if (($sortProductSkus == $sortVendorProductSkus)
+                && (count($productSkus) == count($vendorProductSkus))
+            ) {
+                // Check vendorIds is not empty and is array
+                if (!empty($vendorIds) && is_array($vendorIds)) {
+                    // Get unique vendor ids and array value re-indexing
+                    $vendorIds = array_values(array_unique($vendorIds));
+                }
+                $vendorId = $vendorIds[0];
+                
+                if (!empty($vendorId)) {
+                    $vendor = $this->_objectManager->get('Ced\CsMarketplace\Model\Vendor')->load($vendorId);
+                    // Get Vendor Data
+                    $vendor->getData();
+                    // Get Vendor E-Mail
+                    $vendorEmail = $vendor->getData('email');
+                    // Get tazapay user detail
+                    $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
+                    $sellerId = $tazapay_seller['data']['id'];
+                } else {
+                    $this->messageManager->addError(
+                        __("Something went wrong. Please contact to store owner.")
+                    );
+                    $resultRedirect->setUrl($successPageUrl);
+                    return $resultRedirect;
+                }
+            } elseif ((empty($vendorProductSkus))
+                && (!empty($productSkus) && is_array($productSkus) )) {
+                // Quote have only admin products
+                $sellerEmail = $this->helper->getSellerEmail();
+                $vendorEmail = $sellerEmail;
+                $tazapay_seller =  $this->helper->getTazaPayUserByEmail($vendorEmail);
+                $sellerId = $tazapay_seller['data']['id'];
+                return $sellerId;
+            } else {
+                // Quote have admin and vendor products
+                $this->messageManager->addError(
+                    __("Something went wrong. Please contact to store owner.")
+                );
+                $resultRedirect->setUrl($successPageUrl);
+                return $resultRedirect;
+            }
+        }
     }
 
     /**

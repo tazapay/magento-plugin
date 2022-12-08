@@ -19,8 +19,6 @@ class Config extends \Magento\Payment\Gateway\Config\Config
     const CGI_URL_SANDBOX = 'cgi_url_sandbox';
     const CGI_URL_PRODUCTION = 'cgi_url_production';
     const TAZAPAY_CREATE_USER_ENDPOINT = 'tazapay_create_user_endpoint';
-    const TAZAPAY_CREATE_ESCROW_ENDPOINT = 'tazapay_create_escrow_endpoint';
-    const TAZAPAY_CREATE_PAYMENT_ENDPOINT = 'tazapay_create_payment_endpoint';
     const TAZAPAY_TXN_DESCRIPTION_FOR_ESCROW = 'tazapay_txn_description_for_escrow';
     const TAZAPAY_SELLER_EMAIL = 'tazapay_seller_email';
     const ESCROW_TXN_TYPE = "escrow_txn_type";
@@ -130,26 +128,6 @@ class Config extends \Magento\Payment\Gateway\Config\Config
         return $this->getValue(self::TAZAPAY_CREATE_USER_ENDPOINT);
     }
     
-    /**
-     * GetCreateEscrowEndpoint
-     *
-     * @return string
-     */
-    public function getCreateEscrowEndpoint()
-    {
-        return $this->getValue(self::TAZAPAY_CREATE_ESCROW_ENDPOINT);
-    }
-    
-    /**
-     * GetCreatePaymentEndpoint
-     *
-     * @return string
-     */
-    public function getCreatePaymentEndpoint()
-    {
-        return $this->getValue(self::TAZAPAY_CREATE_PAYMENT_ENDPOINT);
-    }
-
     /**
      * GetTxnDescriptionForEscrow
      *

@@ -25,8 +25,7 @@ class Data extends AbstractHelper
     public const XML_PATH_CGI_URL_SANDBOX = 'payment/tazapay/cgi_url_sandbox';
     public const XML_PATH_CGI_URL_PRODUCTION = 'payment/tazapay/cgi_url_production';
     public const XML_PATH_TAZAPAY_CREATE_USER_ENDPOINT = 'payment/tazapay/tazapay_create_user_endpoint';
-    public const XML_PATH_TAZAPAY_CREATE_ESCROW_ENDPOINT = 'payment/tazapay/tazapay_create_escrow_endpoint';
-    public const XML_PATH_TAZAPAY_CREATE_PAYMENT_ENDPOINT = 'payment/tazapay/tazapay_create_payment_endpoint';
+    public const XML_PATH_TAZAPAY_CREATE_CHECKOUT_ENDPOINT = 'payment/tazapay/tazapay_create_checkout_endpoint';
     public const XML_PATH_TAZAPAY_TXN_DESCRIPTION_FOR_ESCROW = 'payment/tazapay/tazapay_txn_description_for_escrow';
     public const XML_PATH_TAZAPAY_SELLER_EMAIL = 'payment/tazapay/tazapay_seller_email';
     public const XML_PATH_TAZAPAY_SELLER_IND_BUS_TYPE = 'payment/tazapay/tazapay_seller_ind_bus_type';
@@ -234,31 +233,16 @@ class Data extends AbstractHelper
     }
 
     /**
-     * GetCreateEscrowEndpoint
+     * GetCheckoutEndpoint
      *
      * @param mixed $scope
      * @return string
      */
-    public function getCreateEscrowEndpoint()
+    public function getCheckoutEndpoint()
     {
         //for website
         return $this->scopeConfig->getValue(
-            self::XML_PATH_TAZAPAY_CREATE_ESCROW_ENDPOINT,
-            ScopeInterface::SCOPE_WEBSITE
-        );
-    }
-
-    /**
-     * GetCreatePaymentEndpoint
-     *
-     * @param mixed $scope
-     * @return string
-     */
-    public function getCreatePaymentEndpoint()
-    {
-        //for website
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_TAZAPAY_CREATE_PAYMENT_ENDPOINT,
+            self::XML_PATH_TAZAPAY_CREATE_CHECKOUT_ENDPOINT,
             ScopeInterface::SCOPE_WEBSITE
         );
     }
